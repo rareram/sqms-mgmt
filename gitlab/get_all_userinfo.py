@@ -13,8 +13,8 @@ TOKEN = os.getenv("GITLAB_TOKEN")
 HEADERS = {"PRIVATE-TOKEN": TOKEN}
 
 # 저장할 파일명
-JSON_FILE = "gitlab_users.json"
-CSV_FILE = "gitlab_users.csv"
+JSON_FILE = "gitlab_allusers.json"
+CSV_FILE = "gitlab_allusers.csv"
 
 def get_all_users():
     """GitLab 전체 유저 목록 가져오기"""
