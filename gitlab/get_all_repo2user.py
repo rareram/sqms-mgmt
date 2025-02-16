@@ -1,9 +1,14 @@
 import requests
 import json
 import csv
+import os
+from dotenv import load_dotenv
 
-GITLAB_HOST = "https://its.skshieldus.com/git/" 
-TOKEN = "glpat-_ehiq3RWcm1FGy4okekG" 
+# .env 파일에서 환경변수 로드
+load_dotenv()
+
+GITLAB_HOST = os.getenv("GITLAB_HOST") 
+TOKEN = os.getenv("GITLAB_TOKEN") 
 HEADERS = {"PRIVATE-TOKEN": TOKEN}
 JSON_FILE = "gitlab_all_memberlist.json" 
 CSV_FILE = "gitlab_all_memberlist.csv" 

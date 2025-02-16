@@ -1,8 +1,13 @@
 import requests
 import csv
+import os
+from dotenv import load_dotenv
 
-GITLAB_HOST = "http://<GITLAB_HOST>" 
-TOKEN = "<YOUR_ACCESS_TOKEN>" 
+# .env 파일에서 환경변수 로드
+load_dotenv()
+
+GITLAB_HOST = os.getenv("GITLAB_HOST") 
+TOKEN = os.getenv("GITLAB_TOKEN") 
 HEADERS = {"PRIVATE-TOKEN": TOKEN}
 OUTPUT_FILE = "gitlab_repolist.csv" 
 
@@ -27,12 +32,12 @@ def get_all_projects():
     return projects
 
 # 프로젝트 데이터 가져오기
-projects = get_projects()
+projects = get_all_projects()
 
 # CSV 저장
 with open(OUTPUT_FILE, "w", newline="") as csvfile:
     writer = csv.writer(csvfile)
-    writer.writerow(["id", "group", "project", "repository", "description, "url", "created_at", "last_update"])
+    writer.writerow(["id", "group", "project", "repository", "description", "url", "created_at", "last_update"])
 
     for project in projects:
         writer.writerow([

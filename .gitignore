@@ -169,3 +169,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# 생성파일
+gitlab/*.json
+gitlab/*.csv
+grafana/*.csv
