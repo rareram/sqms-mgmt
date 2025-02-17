@@ -26,10 +26,10 @@ if response.status_code == 200:
     data = []
     for team in teams:
         data.append({
-            "id": team.get["id", ""],
-            "team": team.get["name", ""],
-            "email": team.get["email", ""],
-            "avatarUrl": team.get["avatarUrl", ""],
+            "id": team.get("id", ""),
+            "team": team.get("name", ""),
+            "email": team.get("email", ""),
+            "avatarUrl": team.get("avatarUrl", ""),
             "new_team": "",
             "new_email": ""
         })

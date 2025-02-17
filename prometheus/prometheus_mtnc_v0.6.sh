@@ -88,6 +88,150 @@ check_wal_status() {
     return 0
 }
 
+# 패키지에서 바이너리로 마이그레이션
+migrate_package_to_binary() {
+    log_info "패키지 설치에서 바이너리 설치로 마이그레이션을 시작합니다..."
+    
+    # 패키지 설치 확인
+    if [ ! -f "/lib/systemd/system/prometheus.service" ]; then
+        log_error "패키지로 설치된 Prometheus가 없습니다."
+        return 1
+    fi
+
+    # 1. 필요한 디렉토리 구조 생성
+    log_info "디렉토리 구조를 생성합니다..."
+    mkdir -p "$PROM_BASE"/{backup,tsdb,target,rules}
+
+    # 2. 설정 파일 복사
+    log_info "설정 파일을 복사합니다..."
+    if ! cp /etc/prometheus/prometheus.yml "$PROM_CONFIG"; then
+        log_error "prometheus.yml 복사 실패"
+        return 1
+    fi
+
+    if [ -d "/etc/prometheus/target" ]; then
+        if ! cp -r /etc/prometheus/target/* "$PROM_TARGETS/"; then
+            log_error "target 디렉토리 복사 실패"
+            return 1
+        fi
+    fi
+    
+    if [ -d "/etc/prometheus/rules" ]; then
+        if ! cp -r /etc/prometheus/rules/* "$PROM_RULES/"; then
+            log_error "rules 디렉토리 복사 실패"
+            return 1
+        fi
+    fi
+
+    # 3. TSDB 스냅샷 생성 및 백업 전에 admin API 활성화 확인
+    log_info "Admin API 활성화 상태를 확인합니다..."
+    if ! systemctl status prometheus | grep -- "--web.enable-admin-api" >/dev/null; then
+        log_info "Admin API가 비활성화 상태입니다. 활성화를 진행합니다..."
+        
+        # 기존 서비스 파일 백업
+        local service_backup="/lib/systemd/system/prometheus.service.backup_$(date +%Y%m%d_%H%M%S)"
+        cp /lib/systemd/system/prometheus.service "$service_backup"
+        
+        # ExecStart 라인을 찾아서 --web.enable-admin-api 옵션 추가
+        sed -i '/^ExecStart=/ s/$/ --web.enable-admin-api/' /lib/systemd/system/prometheus.service
+        
+        # 서비스 재시작
+        systemctl daemon-reload
+        if ! systemctl restart prometheus; then
+            log_error "Admin API 활성화를 위한 Prometheus 서비스 재시작 실패"
+            mv "$service_backup" /lib/systemd/system/prometheus.service
+            systemctl daemon-reload
+            systemctl start prometheus
+            return 1
+        fi
+        
+        # API 활성화 확인
+        sleep 2
+        if ! systemctl status prometheus | grep -- "--web.enable-admin-api" >/dev/null; then
+            log_error "Admin API 활성화 실패"
+            mv "$service_backup" /lib/systemd/system/prometheus.service
+            systemctl daemon-reload
+            systemctl start prometheus
+            return 1
+        fi
+        
+        log_info "Admin API가 성공적으로 활성화되었습니다."
+    fi
+
+    # 4. TSDB 스냅샷 생성 및 백업
+    log_info "TSDB 스냅샷을 생성합니다..."
+    if ! backup_tsdb; then
+        log_error "TSDB 스냅샷 백업 실패"
+        return 1
+    fi
+
+    # 5. TSDB 데이터 복사
+    log_info "TSDB 데이터를 새 위치로 복사합니다..."
+    if ! cp -r /var/lib/prometheus/* "$PROM_TSDB/"; then
+        log_error "TSDB 복사 실패"
+        return 1
+    fi
+
+    # 6. 새로운 버전 선택 및 서비스 파일 준비
+    if ! select_prometheus_version; then
+        log_error "Prometheus 버전 선택 실패"
+        return 1
+    fi
+    
+    # 7. 기존 서비스 파일 백업
+    local backup_date=$(date +%Y%m%d_%H%M%S)
+    log_info "기존 서비스 파일을 백업합니다..."
+    if ! cp /lib/systemd/system/prometheus.service "/lib/systemd/system/prometheus.service.package_backup_${backup_date}"; then
+        log_error "서비스 파일 백업 실패"
+        return 1
+    fi
+
+    # 8. 새 서비스 파일 생성
+    create_service_file
+
+    # 9. 권한 설정
+    log_info "권한을 설정합니다..."
+    chown -R prometheus:prometheus "$PROM_BASE"
+
+    # 10. 서비스 전환
+    log_info "서비스를 전환합니다..."
+    systemctl stop prometheus
+    mv "/lib/systemd/system/prometheus.service" "/lib/systemd/system/prometheus.service.disabled"
+    systemctl daemon-reload
+
+    # 11. 새 서비스 시작 및 검증
+    if ! verify_prometheus_start; then
+        log_error "새 서비스 시작 실패. 롤백을 시작합니다..."
+        # 롤백 프로세스
+        mv "/lib/systemd/system/prometheus.service.disabled" "/lib/systemd/system/prometheus.service"
+        systemctl daemon-reload
+        systemctl start prometheus
+        log_error "원래 서비스로 롤백되었습니다."
+        return 1
+    fi
+
+    # 12. 정상 작동 확인 후 패키지 제거
+    log_info "새 서비스가 정상 작동하는지 확인합니다..."
+    sleep 10  # 서비스 안정화 대기
+    
+    if curl -s http://localhost:9090/-/healthy >/dev/null; then
+        log_info "새 서비스가 정상 작동합니다. 패키지를 제거합니다..."
+        apt remove --purge prometheus
+        log_info "마이그레이션이 성공적으로 완료되었습니다."
+        log_info "백업된 스냅샷은 $PROM_BACKUP 에서 확인할 수 있습니다."
+        return 0
+    else
+        log_error "새 서비스가 불안정합니다. 롤백을 시작합니다..."
+        # 롤백 프로세스
+        systemctl stop prometheus
+        mv "/lib/systemd/system/prometheus.service.disabled" "/lib/systemd/system/prometheus.service"
+        systemctl daemon-reload
+        systemctl start prometheus
+        log_error "원래 서비스로 롤백되었습니다."
+        return 1
+    fi
+}
+
 # 스토리지 상태 체크
 check_storage_status() {
     log_info "스토리지 상태 확인:"
@@ -345,6 +489,60 @@ select_prometheus_version() {
         fi
         log_error "잘못된 선택입니다. 다시 선택해주세요."
     done
+}
+
+# 바이너리 버전 업데이트/롤백
+update_binary_version() {
+    log_info "바이너리 버전 업데이트/롤백을 시작합니다..."
+    
+    # 바이너리 설치 확인
+    if [ -f "/lib/systemd/system/prometheus.service" ]; then
+        log_error "현재 패키지로 설치된 Prometheus입니다. 먼저 바이너리로 마이그레이션이 필요합니다."
+        return 1
+    fi
+    
+    # 현재 버전 확인
+    local current_version=$(get_current_version)
+    
+    # 1. 스냅샷 생성
+    log_info "현재 TSDB의 스냅샷을 생성합니다..."
+    if ! backup_tsdb; then
+        log_error "TSDB 스냅샷 백업 실패"
+        return 1
+    fi
+    
+    # 2. 버전 선택
+    if ! select_prometheus_version; then
+        log_error "Prometheus 버전 선택 실패"
+        return 1
+    fi
+    
+    # 3. 서비스 파일 생성
+    local backup_date=$(date +%Y%m%d_%H%M%S)
+    log_info "기존 서비스 파일을 백업합니다..."
+    if [ -f "/etc/systemd/system/prometheus.service" ]; then
+        if ! cp /etc/systemd/system/prometheus.service "/etc/systemd/system/prometheus.service.backup_${backup_date}"; then
+            log_error "서비스 파일 백업 실패"
+            return 1
+        fi
+    fi
+    
+    create_service_file
+    
+    # 4. 서비스 시작 및 검증
+    if ! verify_prometheus_start; then
+        log_error "버전 변경 실패. 이전 버전으로 롤백합니다..."
+        if [ -f "/etc/systemd/system/prometheus.service.backup_${backup_date}" ]; then
+            mv "/etc/systemd/system/prometheus.service.backup_${backup_date}" "/etc/systemd/system/prometheus.service"
+            systemctl daemon-reload
+            systemctl start prometheus
+        fi
+        return 1
+    fi
+    
+    log_info "버전 변경이 성공적으로 완료되었습니다."
+    get_current_version  # 변경된 버전 정보 표시
+    return 0
 }
 
 # TSDB 동기화

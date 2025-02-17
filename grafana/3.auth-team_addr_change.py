@@ -8,7 +8,7 @@ import os
 load_dotenv()
 
 # Grafana API 정보
-GRAFANA_HOST = os.getenv("GRAFANA_190_HOST")
+GRAFANA_URL = os.getenv("GRAFANA_190_URL")
 USERNAME = os.getenv("USERNAME")
 PASSWORD = os.getenv("PASSWORD")
 
@@ -16,7 +16,7 @@ PASSWORD = os.getenv("PASSWORD")
 input_file = "grafana_teamlist.csv"
 df = pd.read_csv(input_file)
 
-update_data = []
+updated_data = []
 
 # update data
 for index, row in df.iterrows():
@@ -26,19 +26,19 @@ for index, row in df.iterrows():
 
     if new_team or new_email:
         endpoint = f"/api/teams/{row['id']}"
-        url = f"{GRAFANA_HOST}{endpoint}"
+        url = f"{GRAFANA_URL}{endpoint}"
 
         update_data = {}
 
         # Update data
-        for index, row in df.iterrow():
+        for index, row in df.iterrows():
             team_name = row['team']
             new_team = row['new_team'] if pd.notna(row['new_team']) else None
             new_email = row['new_email'] if pd.notna(row['new_email']) else None
 
             if new_team or new_email:
                 endpoint = f"/api/teams/{row['id']}"
-                url = f"{GRAFANA_HOST}{endpoint}"
+                url = f"{GRAFANA_URL}{endpoint}"
 
                 update_data = {}
                 if new_team:
@@ -48,7 +48,7 @@ for index, row in df.iterrows():
 
                 # Ensure there are no NaN values when sending the request
                 if update_data:
-                    response = requests.patch(url, auth=HTTPBasicAuth(USERNAME, PASSWORD), json=update_data)
+                    response = requests.put(url, auth=HTTPBasicAuth(USERNAME, PASSWORD), json=update_data)
 
                     if response.status_code == 200:
                         print(f"Team '{team_name}' updated successfully!")
@@ -59,7 +59,7 @@ for index, row in df.iterrows():
             else:
                 print(f"No update needed for team '{team_name}'.")
             
-            update_data.append({
+            updated_data.append({
                 "id": row['id'],
                 "team": team_name,
                 "email": row['email'],
@@ -69,7 +69,7 @@ for index, row in df.iterrows():
             })
         
         # Save the new DataFrame
-        updated_df = pd.DataFrame(update_data)
+        updated_df = pd.DataFrame(updated_data)
 
         # CSV overwrite
         updated_df.to_csv(input_file, index=False)
