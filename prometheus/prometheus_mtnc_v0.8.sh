@@ -1045,6 +1045,10 @@ User=prometheus
 ExecStart=/opt/monitoring/prometheus/${SELECTED_VERSION}/prometheus \\
     --config.file=/opt/monitoring/prometheus/prometheus.yml \\
     --storage.tsdb.path=/opt/monitoring/prometheus/tsdb \\
+    --storage.tsdb.retention.time=90d \\
+    --web.console.templates=/opt/monitoring/prometheus/consoles \\
+    --web.console.libraries=/opt/monitoring/prometheus/console_libraries \\
+    --web.listen-address=0.0.0.0:9090 \\
     --web.enable-admin-api
 Restart=on-failure
 
