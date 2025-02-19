@@ -47,18 +47,6 @@ set_prometheus_permissions() {
     return 0
 }
 
-# 작업 확인 함수
-confirm_action() {
-    local message="$1"
-    local confirm
-    read -p "$message 계속 진행하시겠습니까? (y/N): " confirm
-    if [[ "$confirm" != "y" ]]; then
-        log_info "작업이 취소되었습니다."
-        return 1
-    fi
-    return 0
-}
-
 # TSDB 활성 상태 확인
 is_active_tsdb() {
     local tsdb_path="$1"
@@ -87,6 +75,7 @@ find_tsdb_data() {
     local max_depth=2
     local found_dirs=()
     local active_dir=""
+    local silent="${2:-false}"  # 새로운 파라미터 추가
     
     # TSDB 디렉토리 확인 함수 (snapshots 폴더는 제외)
     is_tsdb_dir() {
@@ -126,19 +115,26 @@ find_tsdb_data() {
         return 0
     fi
     
-    echo "여러 TSDB 디렉토리가 발견되었습니다:"
-    for i in "${!found_dirs[@]}"; do
-        echo "$((i+1))) ${found_dirs[$i]}"
-    done
-    
-    while true; do
-        read -p "사용할 TSDB 디렉토리 번호를 선택하세요: " choice
-        if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le ${#found_dirs[@]} ]; then
-            echo "${found_dirs[$((choice-1))]}"
-            return 0
-        fi
-        log_error "잘못된 선택입니다. 다시 선택해주세요."
-    done
+    # silent 모드가 아닐 때만 선택 프롬프트 표시
+    if [ "$silent" != "true" ]; then
+        echo "여러 TSDB 디렉토리가 발견되었습니다:"
+        for i in "${!found_dirs[@]}"; do
+            echo "$((i+1))) ${found_dirs[$i]}"
+        done
+        
+        while true; do
+            read -p "사용할 TSDB 디렉토리 번호를 선택하세요: " choice
+            if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le ${#found_dirs[@]} ]; then
+                echo "${found_dirs[$((choice-1))]}"
+                return 0
+            fi
+            log_error "잘못된 선택입니다. 다시 선택해주세요."
+        done
+    else
+        # silent 모드에서는 첫 번째 디렉토리 반환
+        echo "${found_dirs[0]}"
+        return 0
+    fi
 }
 
 # WAL 디렉토리 찾기 (재귀적)
@@ -346,6 +342,7 @@ is_package_installed() {
 }
 
 # 패키지에서 바이너리로 마이그레이션
+# 패키지에서 바이너리로 마이그레이션
 migrate_package_to_binary() {
     log_info "패키지 설치에서 바이너리 설치로 마이그레이션을 시작합니다..."
     
@@ -437,18 +434,42 @@ migrate_package_to_binary() {
     sleep 10
     if curl -s http://localhost:9090/-/healthy >/dev/null; then
         log_info "새 서비스가 정상 작동합니다. 패키지를 제거합니다..."
-        # 새로 생성한 바이너리용 서비스 파일을 안전한 이름으로 백업하여,
-        # 패키지 제거 시 삭제되지 않도록 함.
-        cp /etc/systemd/system/prometheus.service /etc/systemd/system/prometheus-binary.service
+        # 새로 생성한 바이너리용 서비스 파일을 안전한 이름으로 백업
+        if ! cp /etc/systemd/system/prometheus.service /etc/systemd/system/prometheus-binary.service; then
+            log_error "서비스 파일 백업 실패"
+            return 1
+        fi
+
+        # 패키지 제거 전 불필요한 디렉토리 정리
+        if [ -d "/var/lib/prometheus" ]; then
+            find /var/lib/prometheus -mindepth 1 -delete
+        fi
+        if [ -d "/etc/prometheus" ]; then
+            find /etc/prometheus -mindepth 1 -delete
+        fi
+
         if ! remove_package; then
             log_error "패키지 제거 실패"
             return 1
         fi
-        # 패키지 제거 후, 바이너리 서비스 파일 이름을 원래대로 복원합니다.
-        mv /etc/systemd/system/prometheus-binary.service /etc/systemd/system/prometheus.service
-        systemctl daemon-reload
+
+        # 패키지 제거 후, 바이너리 서비스 파일 이름을 원래대로 복원
+        if ! mv /etc/systemd/system/prometheus-binary.service /etc/systemd/system/prometheus.service; then
+            log_error "서비스 파일 복원 실패"
+            return 1
+        fi
+
+        if ! systemctl daemon-reload; then
+            log_error "systemd 데몬 리로드 실패"
+            return 1
+        fi
+
         sleep 2
-        systemctl start prometheus
+        if ! systemctl start prometheus; then
+            log_error "prometheus 서비스 시작 실패"
+            return 1
+        fi
+
         log_info "마이그레이션이 성공적으로 완료되었습니다."
         return 0
     else
@@ -461,7 +482,6 @@ migrate_package_to_binary() {
         return 1
     fi
 }
-
 
 # 스토리지 상태 체크
 check_storage_status() {
@@ -480,9 +500,9 @@ check_storage_status() {
     
     echo
     
-    # 패키지 설치 TSDB 크기 확인
+    # 패키지 설치 TSDB 크기 확인 (silent 모드 사용)
     if [ -d "/var/lib/prometheus" ]; then
-        local tsdb_dir=$(find_tsdb_data "/var/lib/prometheus")
+        local tsdb_dir=$(find_tsdb_data "/var/lib/prometheus" "true")
         if [ -n "$tsdb_dir" ]; then
             local pkg_tsdb_size=$(du -sh "$tsdb_dir" 2>/dev/null | cut -f1)
             log_info "패키지 설치 TSDB 크기 ($tsdb_dir): $pkg_tsdb_size"
@@ -496,9 +516,9 @@ check_storage_status() {
         fi
     fi
     
-    # 바이너리 설치 TSDB 크기 확인
+    # 바이너리 설치 TSDB 크기 확인 (silent 모드 사용)
     if [ -d "$PROM_TSDB" ]; then
-        local tsdb_dir=$(find_tsdb_data "$PROM_TSDB")
+        local tsdb_dir=$(find_tsdb_data "$PROM_TSDB" "true")
         if [ -n "$tsdb_dir" ]; then
             local bin_tsdb_size=$(du -sh "$tsdb_dir" 2>/dev/null | cut -f1)
             log_info "바이너리 설치 TSDB 크기 ($tsdb_dir): $bin_tsdb_size"
@@ -796,10 +816,7 @@ select_prometheus_version() {
 
 # 바이너리 버전 업데이트/롤백
 update_binary_version() {
-    # log_info "바이너리 버전 업데이트/롤백을 시작합니다..."
-    if ! confirm_action "바이너리 버전 업데이트/롤백을 진행합니다."; then
-        return 1
-    fi
+    log_info "바이너리 버전 업데이트/롤백을 시작합니다..."
     
     # 바이너리 설치 확인
     if is_package_installed; then
@@ -858,10 +875,7 @@ update_binary_version() {
 
 # TSDB 동기화
 sync_tsdb() {
-    # log_info "TSDB 동기화를 시작합니다..."
-    if ! confirm_action "TSDB 동기화를 진행합니다."; then
-        return 1
-    fi
+    log_info "TSDB 동기화를 시작합니다..."
 
     if [ ! -d "/var/lib/prometheus" ] || [ ! -d "$PROM_TSDB" ]; then
         log_error "패키지 설치 TSDB(/var/lib/prometheus) 또는 바이너리 설치 TSDB($PROM_TSDB)가 존재하지 않습니다."
@@ -869,13 +883,8 @@ sync_tsdb() {
     fi
 
     # TSDB 데이터 위치 찾기
-    local pkg_tsdb_dir=$(find_tsdb_data "/var/lib/prometheus")
-    local bin_tsdb_dir=$(find_tsdb_data "$PROM_TSDB")
-
-    if [ -z "$pkg_tsdb_dir" ] || [ -z "$bin_tsdb_dir" ]; then
-        log_error "하나 이상의 TSDB 데이터 위치를 찾을 수 없습니다."
-        return 1
-    fi
+    local pkg_tsdb_dir="/var/lib/prometheus"
+    local bin_tsdb_dir="$PROM_TSDB"
 
     # 각 TSDB의 상태 확인
     local pkg_wal_status=0
@@ -899,38 +908,32 @@ sync_tsdb() {
     local target_path
     local backup_date=$(date +%Y%m%d_%H%M%S)
 
-    if [ $pkg_wal_status -eq 0 ] && [ $bin_wal_status -eq 1 ]; then
-        log_info "패키지 설치 TSDB가 정상입니다. 이 데이터로 동기화를 진행합니다."
-        source_path="/var/lib/prometheus"
-        target_path="$PROM_TSDB"
-    elif [ $pkg_wal_status -eq 1 ] && [ $bin_wal_status -eq 0 ]; then
-        log_info "바이너리 설치 TSDB가 정상입니다. 이 데이터로 동기화를 진행합니다."
-        source_path="$PROM_TSDB"
-        target_path="/var/lib/prometheus"
-    else
-        # 사용자 선택
-        log_info "두 TSDB 모두 정상입니다. 동기화 방향을 선택해주세요:"
-        echo "1) 패키지 설치 TSDB -> 바이너리 설치 TSDB"
-        echo "2) 바이너리 설치 TSDB -> 패키지 설치 TSDB"
-        while true; do
-            read -p "선택: " sync_choice
-            case $sync_choice in
-                1)
-                    source_path="/var/lib/prometheus"
-                    target_path="$PROM_TSDB"
-                    break
-                    ;;
-                2)
-                    source_path="$PROM_TSDB"
-                    target_path="/var/lib/prometheus"
-                    break
-                    ;;
-                *)
-                    log_error "잘못된 선택입니다."
-                    ;;
-            esac
-        done
-    fi
+    echo
+    log_info "TSDB 동기화 방향 선택:"
+    echo "1) 패키지 설치 TSDB -> 바이너리 설치 TSDB [$pkg_tsdb_dir -> $bin_tsdb_dir]"
+    echo "2) 바이너리 설치 TSDB -> 패키지 설치 TSDB [$bin_tsdb_dir -> $pkg_tsdb_dir]"
+    echo
+
+    while true; do
+        read -p "동기화 방향을 선택하세요 (1 또는 2): " sync_choice
+        case $sync_choice in
+            1)
+                source_path="$pkg_tsdb_dir"
+                target_path="$bin_tsdb_dir"
+                log_info "패키지 설치 TSDB에서 바이너리 설치 TSDB로 동기화합니다."
+                break
+                ;;
+            2)
+                source_path="$bin_tsdb_dir"
+                target_path="$pkg_tsdb_dir"
+                log_info "바이너리 설치 TSDB에서 패키지 설치 TSDB로 동기화합니다."
+                break
+                ;;
+            *)
+                log_error "잘못된 선택입니다. 1 또는 2를 입력하세요."
+                ;;
+        esac
+    done
 
     # 대상 TSDB 백업
     log_info "대상 TSDB를 백업합니다..."
@@ -1064,8 +1067,8 @@ EOF
 show_main_menu() {
     echo
     echo "============================================"
-    echo "   Prometheus 관리 스크립트 v0.7 (2025.02.19)"
-    echo "   SKSDU-PLProm01 (10.46.234.94) 서버 전용"
+    echo "  Prometheus 관리 스크립트 v0.8 (2025.02.19)"
+    echo "  SKSDU-PLProm01 (10.46.234.94) 서버 전용"
     echo "============================================"
     echo "1. 스토리지 상태 확인"
     echo "2. 스냅샷 목록 조회"
