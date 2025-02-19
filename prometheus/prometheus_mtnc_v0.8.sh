@@ -88,9 +88,12 @@ find_tsdb_data() {
     local found_dirs=()
     local active_dir=""
     
-    # TSDB 디렉토리 확인 함수
+    # TSDB 디렉토리 확인 함수 (snapshots 폴더는 제외)
     is_tsdb_dir() {
         local dir="$1"
+        if [ "$(basename "$dir")" = "snapshots" ]; then
+            return 1
+        fi
         if [ -d "$dir/chunks_head" ] || [ -d "$dir/wal" ]; then
             return 0
         fi
@@ -100,35 +103,29 @@ find_tsdb_data() {
         return 1
     }
     
-    # 모든 가능한 TSDB 디렉토리 찾기
     while IFS= read -r dir; do
         if is_tsdb_dir "$dir"; then
             found_dirs+=("$dir")
-            # 활성 TSDB 체크
             if is_active_tsdb "$dir"; then
                 active_dir="$dir"
             fi
         fi
     done < <(find "$base_path" -maxdepth $max_depth -type d 2>/dev/null)
     
-    # 발견된 디렉토리가 없는 경우
     if [ ${#found_dirs[@]} -eq 0 ]; then
         return 1
     fi
     
-    # 하나의 TSDB만 발견된 경우
     if [ ${#found_dirs[@]} -eq 1 ]; then
         echo "${found_dirs[0]}"
         return 0
     fi
     
-    # 활성 TSDB가 발견된 경우 우선 반환
     if [ -n "$active_dir" ]; then
         echo "$active_dir"
         return 0
     fi
     
-    # 여러 TSDB가 발견된 경우 사용자 선택
     echo "여러 TSDB 디렉토리가 발견되었습니다:"
     for i in "${!found_dirs[@]}"; do
         echo "$((i+1))) ${found_dirs[$i]}"
@@ -318,14 +315,28 @@ get_service_file_path() {
 
 # 패키지 설치 여부 확인
 is_package_installed() {
-    local os_type=$(detect_os_type)
+    local os_type
+    os_type=$(detect_os_type)
     case "$os_type" in
         debian)
-            dpkg -l | grep -q "^ii.*prometheus"
-            return $?
+            # dpkg-query를 통해 패키지 상태 확인
+            local pkg_status
+            pkg_status=$(dpkg-query -W -f='${Status}' prometheus 2>/dev/null)
+            # 패키지가 설치된 상태라도, /usr/lib/systemd/system/prometheus.service가 있으면 패키지 설치로 판단
+            if [[ "$pkg_status" == "install ok installed" ]]; then
+                if [ -f "/usr/lib/systemd/system/prometheus.service" ]; then
+                    return 0
+                else
+                    # 서비스 파일이 없으면 바이너리로 마이그레이션된 것으로 판단
+                    return 1
+                fi
+            else
+                return 1
+            fi
             ;;
         redhat)
-            rpm -q prometheus >/dev/null
+            # redhat 계열도 비슷하게, 서비스 파일 존재 여부를 추가 체크
+            rpm -q prometheus >/dev/null && [ -f "/usr/lib/systemd/system/prometheus.service" ]
             return $?
             ;;
         *)
@@ -391,21 +402,21 @@ migrate_package_to_binary() {
         return 1
     fi
     
-    # 6. 서비스 파일 처리
+    # 6. 기존 패키지 서비스 파일 처리
     local old_service_file="/usr/lib/systemd/system/prometheus.service"
     if [ ! -f "$old_service_file" ]; then
         log_error "패키지 설치 서비스 파일을 찾을 수 없습니다: $old_service_file"
         return 1
     fi
 
-    # 7. 서비스 중지 및 파일 이동
+    # 7. 서비스 중지 및 기존 서비스 파일 이동
     log_info "서비스를 전환합니다..."
     systemctl stop prometheus
     mv "$old_service_file" "${old_service_file}.disabled"
     systemctl daemon-reload
     sleep 2
 
-    # 8. 새 서비스 파일 생성
+    # 8. 새 서비스 파일 생성 (바이너리용)
     create_service_file
     
     # 9. 권한 설정
@@ -415,7 +426,7 @@ migrate_package_to_binary() {
     # 10. 새 서비스 시작 및 검증
     if ! verify_prometheus_start; then
         log_error "새 서비스 시작 실패. 롤백을 시작합니다..."
-        mv "${service_file}.disabled" "$service_file"
+        mv "${old_service_file}.disabled" "$old_service_file"
         systemctl daemon-reload
         sleep 2
         systemctl start prometheus
@@ -426,22 +437,31 @@ migrate_package_to_binary() {
     sleep 10
     if curl -s http://localhost:9090/-/healthy >/dev/null; then
         log_info "새 서비스가 정상 작동합니다. 패키지를 제거합니다..."
+        # 새로 생성한 바이너리용 서비스 파일을 안전한 이름으로 백업하여,
+        # 패키지 제거 시 삭제되지 않도록 함.
+        cp /etc/systemd/system/prometheus.service /etc/systemd/system/prometheus-binary.service
         if ! remove_package; then
             log_error "패키지 제거 실패"
             return 1
         fi
+        # 패키지 제거 후, 바이너리 서비스 파일 이름을 원래대로 복원합니다.
+        mv /etc/systemd/system/prometheus-binary.service /etc/systemd/system/prometheus.service
+        systemctl daemon-reload
+        sleep 2
+        systemctl start prometheus
         log_info "마이그레이션이 성공적으로 완료되었습니다."
         return 0
     else
         log_error "새 서비스가 불안정합니다. 롤백을 시작합니다..."
         systemctl stop prometheus
-        mv "${service_file}.disabled" "$service_file"
+        mv "${old_service_file}.disabled" "$old_service_file"
         systemctl daemon-reload
         sleep 2
         systemctl start prometheus
         return 1
     fi
 }
+
 
 # 스토리지 상태 체크
 check_storage_status() {
@@ -573,12 +593,13 @@ backup_tsdb() {
         fi
         snapshot_base_dir="$tsdb_dir"
     else
-        local tsdb_dir=$(find_tsdb_data "$PROM_TSDB")
-        if [ -z "$tsdb_dir" ]; then
-            log_error "바이너리 설치 TSDB 데이터를 찾을 수 없습니다"
-            return 1
-        fi
-        snapshot_base_dir="$tsdb_dir"
+        # local tsdb_dir=$(find_tsdb_data "$PROM_TSDB")
+        # if [ -z "$tsdb_dir" ]; then
+            # log_error "바이너리 설치 TSDB 데이터를 찾을 수 없습니다"
+            # return 1
+        # fi
+        # snapshot_base_dir="$tsdb_dir"
+        snapshot_base_dir="$PROM_TSDB"
     fi
 
     # TSDB 크기 확인 및 디스크 공간 체크
