@@ -342,7 +342,6 @@ is_package_installed() {
 }
 
 # 패키지에서 바이너리로 마이그레이션
-# 패키지에서 바이너리로 마이그레이션
 migrate_package_to_binary() {
     log_info "패키지 설치에서 바이너리 설치로 마이그레이션을 시작합니다..."
     
@@ -433,27 +432,33 @@ migrate_package_to_binary() {
     # 11. 정상 작동 확인 후 패키지 제거
     sleep 10
     if curl -s http://localhost:9090/-/healthy >/dev/null; then
-        log_info "새 서비스가 정상 작동합니다. 패키지를 제거합니다..."
+        log_info "새 서비스가 정상 작동합니다."
+        
         # 새로 생성한 바이너리용 서비스 파일을 안전한 이름으로 백업
         if ! cp /etc/systemd/system/prometheus.service /etc/systemd/system/prometheus-binary.service; then
             log_error "서비스 파일 백업 실패"
             return 1
         fi
 
-        # 패키지 제거 전 불필요한 디렉토리 정리
-        if [ -d "/var/lib/prometheus" ]; then
-            find /var/lib/prometheus -mindepth 1 -delete
-        fi
-        if [ -d "/etc/prometheus" ]; then
-            find /etc/prometheus -mindepth 1 -delete
+        # 패키지 설치 여부 확인 후 제거 시도
+        if is_package_installed; then
+            log_info "설치된 패키지를 제거합니다..."
+            # 패키지 제거 전 불필요한 디렉토리 정리
+            if [ -d "/var/lib/prometheus" ]; then
+                find /var/lib/prometheus -mindepth 1 -delete
+            fi
+            if [ -d "/etc/prometheus" ]; then
+                find /etc/prometheus -mindepth 1 -delete
+            fi
+
+            if ! remove_package; then
+                log_warn "패키지 제거 실패. 바이너리 설치는 정상적으로 완료되었습니다."
+            fi
+        else
+            log_info "패키지 설치가 확인되지 않았습니다. 바이너리 설치만 진행합니다."
         fi
 
-        if ! remove_package; then
-            log_error "패키지 제거 실패"
-            return 1
-        fi
-
-        # 패키지 제거 후, 바이너리 서비스 파일 이름을 원래대로 복원
+        # 패키지 제거 결과와 관계없이 서비스 파일 복원
         if ! mv /etc/systemd/system/prometheus-binary.service /etc/systemd/system/prometheus.service; then
             log_error "서비스 파일 복원 실패"
             return 1
