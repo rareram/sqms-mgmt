@@ -1,12 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "Grafana to Teams Direct Sender",
-  "version": "0.1",
+  "name": "Grafana to Teams Sender",
+  "version": "1.0",
+  "description": "Send Grafana graphs to MS Teams chats",
   "permissions": [
     "activeTab",
     "scripting",
     "storage",
-    "tabs"
+    "tabs",
+    "clipboardWrite"
   ],
   "host_permissions": [
     "*://*.grafana.com/*",
@@ -27,5 +29,9 @@
       "matches": ["*://teams.microsoft.com/*"],
       "js": ["content-teams.js"]
     }
-  ]
+  ],
+  "web_accessible_resources": [{
+    "resources": ["html2canvas.min.js"],
+    "matches": ["*://*.grafana.com/*"]
+  }]
 }

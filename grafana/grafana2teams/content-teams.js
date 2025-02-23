@@ -1,4 +1,4 @@
-// Teams 웹 클라이언트와 상호작용
+// content-teams.js
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "GET_CHAT_LIST") {
     // Teams 채팅 목록 요소 찾기
@@ -8,7 +8,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse({
         error: "채팅방 목록을 찾을 수 없습니다. Teams가 로드되었는지 확인해주세요."
       });
-      return;
+      return true;  // 비동기 응답을 위해 true 반환
     }
     
     const chats = Array.from(chatElements).map(elem => ({
@@ -17,6 +17,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }));
     
     sendResponse({ chats });
+    return true;  // 비동기 응답을 위해 true 반환
   }
   
   if (request.action === "SEND_IMAGE") {
@@ -42,5 +43,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } catch (error) {
       sendResponse({ error: "이미지 전송 중 오류가 발생했습니다." });
     }
+    return true;  // 비동기 응답을 위해 true 반환
   }
 });
