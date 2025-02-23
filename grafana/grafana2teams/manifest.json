@@ -1,31 +1,31 @@
 {
-    "manifest_version": 3,
-    "name": "Grafana to Teams Direct Sender",
-    "version": "0.1",
-    "permissions": [
-      "activeTab",
-      "scripting",
-      "storage",
-      "tabs"
-    ],
-    "host_permissions": [
-      "*://*.grafana.com/*",
-      "*://teams.microsoft.com/*"
-    ],
-    "action": {
-      "default_popup": "popup.html"
+  "manifest_version": 3,
+  "name": "Grafana to Teams Direct Sender",
+  "version": "0.1",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://*.grafana.com/*",
+    "*://teams.microsoft.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.grafana.com/*"],
+      "js": ["content-grafana.js"]
     },
-    "background": {
-      "service_worker": "background.js"
-    },
-    "content_scripts": [
-      {
-        "matches": ["*://*.grafana.com/*"],
-        "js": ["content-grafana.js"]
-      },
-      {
-        "matches": ["*://teams.microsoft.com/*"],
-        "js": ["content-teams.js"]
-      }
-    ]
-  }
+    {
+      "matches": ["*://teams.microsoft.com/*"],
+      "js": ["content-teams.js"]
+    }
+  ]
+}
