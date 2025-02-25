@@ -71,7 +71,8 @@ function findGrafanaPanel(element) {
         '[data-panelid]',
         '.grafana-panel',
         '.panel',
-        '.panel-wrapper'
+        '.panel-wrapper',
+        '.graph-panel'
     ];
     
     let current = element;
@@ -94,19 +95,33 @@ function findGrafanaPanel(element) {
     return null;
 }
 
+async function loadHtml2Canvas() {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = chrome.runtime.getURL('html2canvas.min.js');
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('html2canvas 로드 실패'));
+        document.head.appendChild(script);
+    });
+}
+
 // 패널 캡처 및 전송 함수
 async function captureAndSendPanel(panel) {
     console.log('Attempting to capture panel:', panel);
     
     try {
         if (!window.html2canvas) {
-            console.error('html2canvas not loaded');
+            console.log('Loading html2canvas');
             await loadHtml2Canvas();
+            console.log('html2canvas loaded');
         }
         
         const canvas = await window.html2canvas(panel, {
             scale: 2,
-            logging: true
+            logging: true,
+            useCORS: true,
+            allowTaint: true,
+            foreignObjectRendering: true
         });
         
         console.log('Panel captured successfully');
