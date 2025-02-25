@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Grafana to Teams Sender",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "Send Grafana graphs to MS Teams chats",
   "permissions": [
     "activeTab",
