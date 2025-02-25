@@ -23,7 +23,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const participants = elem.querySelector('.chat-participants')?.textContent || // 예상 클래스
                              elem.querySelector('.ts-channel-members')?.textContent || // 다른 가능성
                              "알 수 없는 채팅방";
-        chatName = participants.trim() ? `참석자: ${participants}` : "알 수 없는 채팅방";
+        chatName = participants.trim() ? `${participants}` `${elem.getAttribute('data-tid')}` : "알 수 없는 채팅방";
       }
       
       return {
