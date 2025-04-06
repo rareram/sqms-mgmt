@@ -1,0 +1,23 @@
+{
+    "app_name": "IT 관리 시스템",
+    "logo_path": "assets/logo.png",
+    "theme": "light",
+    "modules": [
+        {
+            "id": "ldap_manager",
+            "enabled": true
+        },
+        {
+            "id": "gitlab_manager",
+            "enabled": true
+        },
+        {
+            "id": "redmine_manager",
+            "enabled": true
+        },
+        {
+            "id": "grafana_manager",
+            "enabled": true
+        }
+    ]
+}

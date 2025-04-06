@@ -1,0 +1,8 @@
+{
+    "id": "ldap_manager",
+    "name": "LDAP 관리",
+    "description": "LDAP 사용자 및 퇴사자 관리",
+    "version": "1.0.0",
+    "author": "관리자",
+    "dependencies": ["python-ldap", "pandas"]
+}
