@@ -36,6 +36,13 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('Message received in background:', message);
     
+    if (message.action === "CAPTURE_TAB") {
+        chrome.tabs.captureVisibleTab(null, {format: "png"}, (imageUrl) => {
+            sendResponse({imageUrl});
+        });
+        return true;
+    }
+
     if (message.action === "SEND_TO_TEAMS") {
         chrome.storage.sync.get('selectedChat', async (data) => {
             if (!data.selectedChat) {

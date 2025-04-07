@@ -6,6 +6,9 @@ import importlib
 import sys
 import pkgutil
 from pathlib import Path
+import time
+
+VERSION = "v0.2.250407"
 
 # 앱 정보 관리 클래스
 class AppConfig:
@@ -13,6 +16,10 @@ class AppConfig:
         # 기본 설정 로드
         self.config_file = "config.json"
         self.config = self.load_config()
+
+        if "version" not in self.config:
+            self.config["version"] = VERSION
+            self.save_config()
     
     def load_config(self):
         """설정 파일 로드"""
@@ -91,6 +98,55 @@ class AppConfig:
             self.config["theme"] = theme
         self.save_config()
 
+# 애플리케이션 전체에 사용할 CSS 정의
+def add_custom_css():
+    st.markdown("""
+    <style>
+    /* 그라데이션 진행 표시줄 스타일 */
+    .stProgress > div > div {
+        background-image: linear-gradient(to right, #FF7A00, #EA002C);
+    }
+    
+    /* 앱 이름 아래 버전 텍스트 스타일 */
+    .version-text {
+        font-size: 0.8em;
+        color: #888;
+        margin-top: -1.5em;
+        margin-bottom: 1em;
+    }
+    
+    /* 상단 그라데이션 바 */
+    .gradient-header {
+        background-image: linear-gradient(to right, #FF7A00, #EA002C);
+        height: 5px;
+        margin-bottom: 20px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# 진행 표시줄 유틸리티 함수
+def show_progress_bar(message="처리 중입니다...", steps=10, sleep_time=0.1):
+    """그라데이션 진행 표시줄 표시
+    
+    Args:
+        message (str): 표시할 메시지
+        steps (int): 진행 단계 수
+        sleep_time (float): 단계 간 지연 시간(초)
+    """
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+    
+    for i in range(steps):
+        progress = (i + 1) / steps
+        status_text.text(f"{message} ({int(progress * 100)}%)")
+        progress_bar.progress(progress)
+        time.sleep(sleep_time)
+    
+    status_text.text(f"{message} 완료!")
+    time.sleep(0.5)
+    progress_bar.empty()
+    status_text.empty()
+
 # 모듈 로더
 def load_module(module_id):
     """모듈 동적 로드"""
@@ -105,16 +161,26 @@ def load_module(module_id):
 def main():
     # 환경변수 로드
     load_dotenv()
+
+    # 커스텀 CSS 추가
+    add_custom_css()
+
+    # 그라데이션 헤더 바 추가
+    st.markdown('<div class="gradient-header"></div>', unsafe_allow_html=True)
     
     # 앱 설정 로드
     app_config = AppConfig()
-    
+
     # 사이드바 설정
     with st.sidebar:
         # 로고와 앱 이름 표시
         if os.path.exists(app_config.config["logo_path"]):
             st.image(app_config.config["logo_path"], width=100)
         st.title(app_config.config["app_name"])
+
+        # 버전 정보 표시
+        # st.caption(f"버전: {app_config.config.get('version', VERSION)}")
+        st.markdown(f'<p class="version-text">버전: {app_config.config.get("version", VERSION)}</p>', unsafe_allow_html=True)
         
         # 활성화된 모듈 목록
         active_modules, _ = app_config.get_modules()

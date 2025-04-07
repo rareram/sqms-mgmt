@@ -341,14 +341,14 @@ def show_grafana_settings():
     
     # 현재 설정된 Grafana 정보 불러오기
     grafana_url = os.environ.get("GRAFANA_URL", "")
-    grafana_username = os.environ.get("GRAFANA_USERNAME", "")
-    grafana_password = os.environ.get("GRAFANA_PASSWORD", "")
+    grafana_token = os.environ.get("GRAFANA_API_TOKEN", "")
     
     # Grafana 설정 입력 폼
     with st.form("grafana_settings_form"):
         new_grafana_url = st.text_input("Grafana 서버 주소", value=grafana_url)
-        new_grafana_username = st.text_input("사용자명", value=grafana_username)
-        new_grafana_password = st.text_input("비밀번호", value=grafana_password, type="password")
+        new_grafana_token = st.text_input("API 토큰", value=grafana_token, type="password")
+
+        st.info("API 토큰은 Grafana 웹 인터페이스의 [설정 > API 키]에서 생성할 수 있습니다.")
         
         # 저장 버튼
         submit_button = st.form_submit_button("설정 저장")
@@ -357,8 +357,7 @@ def show_grafana_settings():
             # .env 파일 업데이트
             update_env_file({
                 "GRAFANA_URL": new_grafana_url,
-                "GRAFANA_USERNAME": new_grafana_username,
-                "GRAFANA_PASSWORD": new_grafana_password
+                "GRAFANA_API_TOKEN": new_grafana_token
             })
             
             st.success("Grafana 설정이 저장되었습니다.")
@@ -374,16 +373,15 @@ def check_grafana_connection():
     """Grafana 연결 테스트"""
     try:
         grafana_url = os.environ.get("GRAFANA_URL")
-        grafana_username = os.environ.get("GRAFANA_USERNAME")
-        grafana_password = os.environ.get("GRAFANA_PASSWORD")
+        grafana_token = os.environ.get("GRAFANA_API_TOKEN")
         
-        if not all([grafana_url, grafana_username, grafana_password]):
+        if not all([grafana_url, grafana_token]):
             return False
         
-        auth = HTTPBasicAuth(grafana_username, grafana_password)
+        headers = {"Authorization": f"Bearer {grafana_token}"}
         url = f"{grafana_url}/api/org"
         
-        response = requests.get(url, auth=auth)
+        response = requests.get(url, headers=headers)
         response.raise_for_status()
         
         return True
@@ -395,16 +393,15 @@ def get_all_teams():
     """Grafana 팀 목록 조회"""
     try:
         grafana_url = os.environ.get("GRAFANA_URL")
-        grafana_username = os.environ.get("GRAFANA_USERNAME")
-        grafana_password = os.environ.get("GRAFANA_PASSWORD")
+        grafana_token = os.environ.get("GRAFANA_API_TOKEN")
         
-        if not all([grafana_url, grafana_username, grafana_password]):
+        if not all([grafana_url, grafana_token]):
             return []
         
-        auth = HTTPBasicAuth(grafana_username, grafana_password)
+        headers = {"Authorization": f"Bearer {grafana_token}"}
         url = f"{grafana_url}/api/teams/search?perpage=1000"
         
-        response = requests.get(url, auth=auth)
+        response = requests.get(url, headers=headers)
         response.raise_for_status()
         
         return response.json()["teams"]

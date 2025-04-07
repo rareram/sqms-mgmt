@@ -107,39 +107,18 @@ async function loadHtml2Canvas() {
 
 // 패널 캡처 및 전송 함수
 async function captureAndSendPanel(panel) {
-    console.log('Attempting to capture panel:', panel);
-    
     try {
-        if (!window.html2canvas) {
-            console.log('Loading html2canvas');
-            await loadHtml2Canvas();
-            console.log('html2canvas loaded');
-        }
+        // 현재 탭의 가시 영역 캡처
+        const imageUrl = await chrome.runtime.sendMessage({ action: "CAPTURE_TAB" });
         
-        const canvas = await window.html2canvas(panel, {
-            scale: 2,
-            logging: true,
-            useCORS: true,
-            allowTaint: true,
-            foreignObjectRendering: true
-        });
+        // 클립보드에 복사
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const clipboardItem = new ClipboardItem({ 'image/png': blob });
+        await navigator.clipboard.write([clipboardItem]);
         
-        console.log('Panel captured successfully');
-        
-        canvas.toBlob(async (blob) => {
-            try {
-                const clipboardItem = new ClipboardItem({ 'image/png': blob });
-                await navigator.clipboard.write([clipboardItem]);
-                console.log('Image copied to clipboard');
-                
-                chrome.runtime.sendMessage({
-                    action: "SEND_TO_TEAMS"
-                });
-            } catch (error) {
-                console.error('Failed to copy to clipboard:', error);
-                alert('클립보드 복사에 실패했습니다.');
-            }
-        });
+        console.log('Image copied to clipboard');
+        chrome.runtime.sendMessage({ action: "SEND_TO_TEAMS" });
     } catch (error) {
         console.error('Capture failed:', error);
         alert('이미지 캡처에 실패했습니다.');

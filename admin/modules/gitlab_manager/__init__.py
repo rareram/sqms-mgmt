@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 import time
 from io import StringIO
+from progress import show_progress_bar
 
 def show_module():
     """GitLab 관리 모듈 메인 화면"""
@@ -41,15 +42,23 @@ def show_repository_management():
     
     # 저장소 목록 불러오기
     if st.button("저장소 목록 갱신"):
-        with st.spinner("저장소 목록을 불러오는 중입니다..."):
-            repositories = get_all_repositories()
+        # with st.spinner("저장소 목록을 불러오는 중입니다..."):
+            # repositories = get_all_repositories()
             
-            if repositories:
+            # if repositories:
                 # 세션 상태에 저장
-                st.session_state.repositories = repositories
-                st.success(f"총 {len(repositories)}개의 저장소를 불러왔습니다.")
-            else:
-                st.error("저장소 목록을 불러오는데 실패했습니다.")
+                # st.session_state.repositories = repositories
+                # st.success(f"총 {len(repositories)}개의 저장소를 불러왔습니다.")
+            # else:
+                # st.error("저장소 목록을 불러오는데 실패했습니다.")
+        
+        show_progress_bar("저장소 목록을 불러오는 중입니다", steps=10)
+
+        repositories = get_all_repositories()
+
+        if repositories:
+            st.session_state.repositories = repositories
+            st.success(f"총 {len(repositories)}개의 저장소를 불러왔습니다.")
     
     # 저장소 목록 표시
     if hasattr(st.session_state, 'repositories'):
