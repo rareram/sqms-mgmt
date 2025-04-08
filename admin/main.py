@@ -10,11 +10,28 @@ import time
 
 VERSION = "v0.1.1 - 250408"
 
+def load_initial_config():
+    config_file = "config.json"
+    if os.path.exists(config_file):
+        with open(config_file, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {
+        "app_name": "IT 관리 시스템",
+        "logo_path": "assets/logo.png",
+        "theme": "light",
+        "wide_layout": False,
+        "module": []
+    }
+
+# 초기 설정값 로드
+initial_config = load_initial_config()
 st.set_page_config(
-    # page_title="SQMS 관리 시스템",
+    page_title=initial_config.get("app_name", "IT 관리 시스템"),
     page_icon="🔧",
+    layout="wide" if initial_config.get("wide_layout", True) else "centered",
     initial_sidebar_state="expanded"
 )
+
 
 # 앱 정보 관리 클래스
 class AppConfig:
@@ -23,13 +40,9 @@ class AppConfig:
         self.config_file = "config.json"
         self.config = self.load_config()
 
-        if self.config.get("wide_layout", True):
-            st.set_page_config(
-                layout="wide",
-                # page_title="SQMS 관리 시스템",
-                # page_icon="🔧",
-                initial_sidebar_state="expanded"
-            )
+        if "version" not in self.config:
+            self.config["version"] = VERSION
+            self.save_config()
     
     def load_config(self):
         """설정 파일 로드"""
