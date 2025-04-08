@@ -9,7 +9,7 @@ from io import StringIO
 from progress import show_progress_bar
 
 # 모듈 버전 정보
-VERSION = "v0.1.0"
+VERSION = "v0.1.1"
 
 def show_module():
     """GitLab 관리 모듈 메인 화면"""
@@ -258,9 +258,9 @@ def show_user_management():
         
         # 선택한 사용자의 상세 정보 표시
         st.subheader("사용자 상세 정보")
-        user_id = st.number_input("사용자 ID", min_value=1, value=1)
+        user_id = st.number_input("사용자 ID", min_value=1, value=1, key="user_id_input")
         
-        if st.button("상세 정보 조회"):
+        if st.button("상세 정보 조회", key=f"fetch_user_details_{user_id}"):
             with st.spinner("사용자 정보를 불러오는 중입니다..."):
                 user_details = get_user_details(user_id)
                 
@@ -307,7 +307,8 @@ def show_user_management():
                     else:
                         st.info("사용자 프로젝트 정보를 불러오는데 실패했습니다.")
                 else:
-                    st.error("사용자 정보를 불러오는데 실패했습니다.")
+                    # st.error("사용자 정보를 불러오는데 실패했습니다.")
+                    st.warning(f"ID {user_id}에 해당하는 사용자 정보가 없습니다. 존재하지 않는 ID이거나 퇴사로 인해 삭제된 ID 일 수 있습니다.")
         
         # CSV 다운로드 버튼
         csv = df.to_csv(index=False)
@@ -593,6 +594,10 @@ def get_user_details(user_id):
         url = f"{gitlab_host}/api/v4/users/{user_id}"
         
         response = requests.get(url, headers=headers)
+
+        if response.status_code == 404:
+            return None
+
         response.raise_for_status()
         
         return response.json()
