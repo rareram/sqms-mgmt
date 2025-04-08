@@ -76,7 +76,7 @@ def add_custom_css():
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 20px;
-        background-color: #f0f0f0;
+        background-color: #858585;
         transition: all 0.3s ease;
         overflow: hidden;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -320,7 +320,7 @@ def show_settings(app_config):
                     if st.button("비활성화", key=f"disable_{module['id']}"):
                         app_config.remove_module(module['id'])
                         st.success(f"{module['name']} 모듈이 비활성화되었습니다.")
-                        st.experimental_rerun()
+                        st.rerun()
         else:
             st.info("활성화된 모듈이 없습니다.")
         
@@ -349,7 +349,7 @@ def show_settings(app_config):
                     if st.button("활성화", key=f"enable_{module['id']}"):
                         app_config.add_module(module['id'])
                         st.success(f"{module['name']} 모듈이 활성화되었습니다.")
-                        st.experimental_rerun()
+                        st.rerun()
 
 # 환경변수 업데이트 함수
 def update_env_file(new_values):
@@ -413,7 +413,7 @@ def main():
         # 설정 버튼
         if st.button("⚙️ 설정"):
             st.session_state.selected_module = "설정"
-            st.experimental_rerun()
+            st.rerun()
         
         # 세션 상태에서 선택된 모듈 가져오기
         if "selected_module" in st.session_state:
