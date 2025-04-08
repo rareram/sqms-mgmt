@@ -8,7 +8,7 @@ import pkgutil
 from pathlib import Path
 import time
 
-VERSION = "v0.1.1 - 250408"
+VERSION = "v0.1.3 - 250408"
 
 def load_initial_config():
     config_file = "config.json"
@@ -25,13 +25,13 @@ def load_initial_config():
 
 # 초기 설정값 로드
 initial_config = load_initial_config()
+
 st.set_page_config(
     page_title=initial_config.get("app_name", "IT 관리 시스템"),
     page_icon="🔧",
-    layout="wide" if initial_config.get("wide_layout", True) else "centered",
+    layout="wide" if initial_config.get("wide_layout", False) else "centered",
     initial_sidebar_state="expanded"
 )
-
 
 # 앱 정보 관리 클래스
 class AppConfig:
@@ -273,15 +273,100 @@ def show_dashboard(app_config):
     # 모듈별 요약 정보 표시
     st.subheader("활성화된 모듈")
     
+    # CSS 스타일 추가
+    st.markdown("""
+    <style>
+    .module-card {
+        position: relative;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background-color: #f9f9f9;
+        transition: all 0.3s ease;
+        overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .module-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .module-card h3 {
+        margin-top: 0;
+        color: #333;
+        font-weight: 600;
+    }
+    
+    .module-card p {
+        color: #666;
+        margin-bottom: 15px;
+    }
+    
+    .module-card .version {
+        font-size: 0.8em;
+        color: #888;
+        margin-top: 10px;
+    }
+    
+    .gear-icon {
+        position: absolute;
+        bottom: -25px;
+        right: -25px;
+        font-size: 100px;
+        color: rgba(180, 180, 180, 0.1);
+        transform: rotate(30deg);
+        z-index: 0;
+    }
+    
+    .module-icon {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        background-color: #FF7A00;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 40px;
+        margin-right: 10px;
+        color: white;
+        font-weight: bold;
+        font-size: 18px;
+        float: left;
+        margin-top: -5px;
+    }
+    
+    .module-content {
+        position: relative;
+        z-index: 1;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # 모듈 아이콘 매핑
+    module_icons = {
+        "ldap_manager": "👤",
+        "gitlab_manager": "🔄",
+        "redmine_manager": "📋",
+        "grafana_manager": "📊",
+        "default": "🔌"
+    }
+
     cols = st.columns(min(3, len(active_modules)))
     for i, module_info in enumerate(active_modules):
         with cols[i % 3]:
+            module_id = module_info["id"]
             module_version = module_info.get("version", "N/A")
+            module_icon = module_icons.get(module_id, module_icons["default"])
+
             st.markdown(f"""
             <div class="module-card">
-                <h3P{module_info["name"]}</h3>
-                <p>{module_info["description"]}</p>
-                <small>버전: {module_version}</small>
+                <div class="gear-icon">⚙️</div>
+                <div class="module-content">
+                    <div class="module-icon">{module_icon}</div>
+                    <h3>{module_info["name"]}</h3>
+                    <p>{module_info["description"]}</p>
+                    <div class="version">버전: {module_version}</div>
             <div>
             """, unsafe_allow_html=True)
 
@@ -296,24 +381,26 @@ def show_settings(app_config):
     with tab1:
         st.subheader("앱 정보 설정")
         
-        # 앱 이름 설정
-        app_name = st.text_input("앱 이름", app_config.config["app_name"])
+        with st.form(key="app_setting_form"):
+            # 앱 이름 설정
+            app_name = st.text_input("앱 이름", app_config.config["app_name"])
         
-        # 로고 설정
-        logo_path = st.text_input("로고 경로", app_config.config["logo_path"])
+            # 로고 설정
+            logo_path = st.text_input("로고 경로", app_config.config["logo_path"])
         
-        # 테마 설정
-        theme = st.selectbox("테마", ["light", "dark"], 
+            # 테마 설정
+            theme = st.selectbox("테마", ["light", "dark"], 
                             index=0 if app_config.config["theme"] == "light" else 1)
         
-        # 레이아웃 설정
-        wide_layout = st.checkbox("넓은 레이아웃 사용", app_config.config.get("wide_layout", True))
+            # 레이아웃 설정
+            wide_layout = st.checkbox("넓은 레이아웃 사용", app_config.config.get("wide_layout", True))
+
+            submit_button = st.form_submit_button("설정 저장")
+
+            if submit_button:
+                app_config.update_app_info(app_name, logo_path, theme, wide_layout)
+                st.success("설정이 저장되었습니다. 변경사항을 적용하려면 앱을 다시 시작하세요.")
         
-        # 적용 버튼
-        if st.button("설정 저장", key="save_app_settings"):
-            app_config.update_app_info(app_name, logo_path, theme, wide_layout)
-            st.success("설정이 저장되었습니다. 변경사항을 적용하려면 앱을 다시 시작하세요.")
-    
     # 모듈 관리 탭
     with tab2:
         st.subheader("모듈 관리")

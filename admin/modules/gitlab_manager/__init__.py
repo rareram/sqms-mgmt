@@ -9,7 +9,7 @@ from io import StringIO
 from progress import show_progress_bar
 
 # 모듈 버전 정보
-VERSION = "v0.1.1"
+VERSION = "v0.1.2"
 
 def show_module():
     """GitLab 관리 모듈 메인 화면"""
@@ -19,19 +19,19 @@ def show_module():
     st.caption(f"모듈 버전: {VERSION}")
     
     # 탭 생성
-    tab1, tab2, tab3, tab4 = st.tabs(["저장소 관리", "사용자 관리", "미사용 저장소", "GitLab 설정"])
+    tab1, tab2, tab3, tab4 = st.tabs(["저장소 관리", "미사용 저장소", "사용자 관리", "GitLab 설정"])
     
     # 저장소 관리 탭
     with tab1:
         show_repository_management()
+
+    # 미사용 저장소 탭
+    with tab2:
+        show_unused_repositories()
     
     # 사용자 관리 탭
-    with tab2:
-        show_user_management()
-    
-    # 미사용 저장소 탭
     with tab3:
-        show_unused_repositories()
+        show_user_management()
     
     # GitLab 설정 탭
     with tab4:
@@ -47,17 +47,8 @@ def show_repository_management():
         return
     
     # 저장소 목록 불러오기
-    if st.button("저장소 목록 갱신"):
-        # with st.spinner("저장소 목록을 불러오는 중입니다..."):
-            # repositories = get_all_repositories()
-            
-            # if repositories:
-                # 세션 상태에 저장
-                # st.session_state.repositories = repositories
-                # st.success(f"총 {len(repositories)}개의 저장소를 불러왔습니다.")
-            # else:
-                # st.error("저장소 목록을 불러오는데 실패했습니다.")
-        
+    if st.button("저장소 목록 갱신", key="refresh_repo_list"):
+        # 진행 표시줄 사용
         show_progress_bar("저장소 목록을 불러오는 중입니다", steps=10)
 
         repositories = get_all_repositories()
@@ -71,7 +62,7 @@ def show_repository_management():
         repositories = st.session_state.repositories
         
         # 검색 필터
-        search_term = st.text_input("저장소 검색 (이름, 그룹, 설명)")
+        search_term = st.text_input("저장소 검색 (이름, 그룹, 설명)", key="repo_search")
         
         # 필터링
         if search_term:
@@ -83,7 +74,7 @@ def show_repository_management():
             filtered_repos = repositories
         
         # 정렬 옵션
-        sort_option = st.selectbox("정렬 기준", ["최근 활동순", "이름순", "생성일순"])
+        sort_option = st.selectbox("정렬 기준", ["최근 활동순", "이름순", "생성일순"], key="repo_sort")
         
         # 정렬
         if sort_option == "최근 활동순":
@@ -96,25 +87,39 @@ def show_repository_management():
         # 저장소 목록 표시
         st.write(f"총 {len(filtered_repos)}개의 저장소가 있습니다.")
         
-        # 데이터프레임 생성
-        df = pd.DataFrame([{
-            "ID": repo["id"],
-            "그룹": repo["namespace"]["name"],
-            "프로젝트": repo["name"],
-            "설명": repo.get("description", ""),
-            "URL": repo["web_url"],
-            "생성일": repo["created_at"],
-            "최근 활동": repo["last_activity_at"]
-        } for repo in filtered_repos])
+        try:
+            # 데이터프레임 생성
+            df = pd.DataFrame([{
+                "ID": repo["id"],
+                "그룹": repo["namespace"]["name"],
+                "프로젝트": repo["name"],
+                "설명": repo.get("description", ""),
+                "URL": repo["web_url"],
+                "생성일": repo["created_at"],
+                "최근 활동": repo["last_activity_at"]
+            } for repo in filtered_repos])
         
-        # 데이터프레임 표시
-        st.dataframe(df)
+            # 데이터프레임 표시
+            st.dataframe(df, key="repo_dataframe")
+
+            # CSV 다운로드 버튼
+            csv = df.to_csv(index=False)
+            st.download_button(
+                label="저장소 목록 CSV 다운로드",
+                data=csv,
+                file_name="gitlab_repositories.csv",
+                mime="text/csv",
+                key="download_repo_csv"
+            )
+        except Exception as e:
+            st.error(f"저장소 목록 표시 중 오류가 발생했습니다: {str(e)}")
+            st.info("저장소 데이터 형식이 예사과 다를 수 있습니다. GitLab API 응답을 확인해주세요.")
         
         # 선택한 저장소의 상세 정보 표시
         st.subheader("저장소 상세 정보")
-        repo_id = st.number_input("저장소 ID", min_value=1, value=1)
+        repo_id = st.number_input("저장소 ID", min_value=1, value=1, key="repo_id_input")
         
-        if st.button("상세 정보 조회"):
+        if st.button("상세 정보 조회", key="fetch_repo_details"):
             with st.spinner("저장소 정보를 불러오는 중입니다..."):
                 repo_details = get_repository_details(repo_id)
                 
@@ -149,7 +154,7 @@ def show_repository_management():
                         } for member in members])
                         
                         # 멤버 데이터프레임 표시
-                        st.dataframe(members_df)
+                        st.dataframe(members_df, key="members_dataframe")
                         
                         # CSV 다운로드 버튼
                         csv = members_df.to_csv(index=False)
@@ -157,7 +162,8 @@ def show_repository_management():
                             label="멤버 목록 CSV 다운로드",
                             data=csv,
                             file_name=f"gitlab_repo_{repo_id}_members.csv",
-                            mime="text/csv"
+                            mime="text/csv",
+                            key="download_members_csv"
                         )
                     else:
                         st.info("저장소 멤버 정보를 불러오는데 실패했습니다.")
@@ -177,20 +183,12 @@ def show_repository_management():
                         } for commit in commits])
                         
                         # 커밋 데이터프레임 표시
-                        st.dataframe(commits_df)
+                        st.dataframe(commits_df, key="commits_dataframe")
                     else:
                         st.info("저장소 커밋 정보를 불러오는데 실패했습니다.")
                 else:
                     st.error("저장소 정보를 불러오는데 실패했습니다.")
         
-        # CSV 다운로드 버튼
-        csv = df.to_csv(index=False)
-        st.download_button(
-            label="저장소 목록 CSV 다운로드",
-            data=csv,
-            file_name="gitlab_repositories.csv",
-            mime="text/csv"
-        )
     else:
         st.info("'저장소 목록 갱신' 버튼을 클릭하여 저장소 목록을 불러와주세요.")
 
@@ -462,7 +460,26 @@ def get_all_repositories():
             if not data:
                 break
             
-            projects.extend(data)
+            # 데이터 형식 검증 및 불필요한 필드 제거
+            for project in data:
+                # 필수 필드 확인
+                if all(key in project for key in ["id", "name", "namespace", "web_url", "created_at", "last_activity_at"]):
+                    # 네임스페이스 확인 및 보정
+                    if not isinstance(project["namespace"], dict) or "name" not in project["namespace"]:
+                        project["namespace"] = {"name": "Unknown"}
+                    
+                    # 필수 필드만 유지하여 메모리 절약
+                    clean_project = {
+                        "id": project["id"],
+                        "name": project["name"],
+                        "namespace": {"name": project["namespace"]["name"]},
+                        "description": project.get("description", ""),
+                        "web_url": project["web_url"],
+                        "created_at": project["created_at"],
+                        "last_activity_at": project["last_activity_at"]
+                    }
+                    projects.append(clean_project)
+            
             page += 1
             time.sleep(0.5)  # API 요청 제한 방지
         
