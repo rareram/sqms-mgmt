@@ -1,8 +1,7 @@
 {
-    "app_name": "IT 관리 시스템",
+    "app_name": "SQMS 관리 시스템",
     "logo_path": "assets/logo.png",
     "theme": "light",
-    "version": "v0.1.0",
     "modules": [
         {
             "id": "ldap_manager",

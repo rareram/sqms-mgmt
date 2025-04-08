@@ -2,7 +2,6 @@
     "id": "redmine_manager",
     "name": "Redmine 관리",
     "description": "Redmine 프로젝트 및 사용자 관리",
-    "version": "1.0.0",
     "author": "관리자",
     "dependencies": ["requests", "pandas"]
 }

@@ -5,9 +5,15 @@ import os
 from datetime import datetime, timedelta
 import time
 
+# 모듈 버전 정보
+VERSION = "v0.1.0"
+
 def show_module():
     """Redmine 관리 모듈 메인 화면"""
     st.title("Redmine 관리")
+
+    # 버전 정보 표시
+    st.caption(f"모듈 버전: {VERSION}")
     
     # 탭 생성
     tab1, tab2, tab3 = st.tabs(["프로젝트 관리", "사용자 관리", "Redmine 설정"])

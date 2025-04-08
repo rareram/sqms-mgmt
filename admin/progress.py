@@ -2,7 +2,13 @@ import streamlit as st
 import time
 
 def show_progress_bar(message="처리 중입니다...", steps=10, sleep_time=0.1):
-    """그라데이션 진행 표시줄 표시"""
+    """그라데이션 진행 표시줄 표시
+    
+    Args:
+        message (str): 표시할 메시지
+        steps (int): 진행 단계 수
+        sleep_time (float): 단계 간 지연 시간(초)
+    """
     progress_bar = st.progress(0)
     status_text = st.empty()
     

@@ -8,9 +8,15 @@ import time
 import urllib.parse
 import base64
 
+# 모듈 버전 정보
+VERSION = "v0.1.0"
+
 def show_module():
     """Grafana 관리 모듈 메인 화면"""
     st.title("Grafana 관리")
+
+    # 버전 정보 표시
+    st.caption(f"모듈 버전: {VERSION}")
     
     # 탭 생성
     tab1, tab2, tab3 = st.tabs(["팀 관리", "폴더 권한 관리", "Grafana 설정"])

@@ -4,9 +4,15 @@ import os
 from datetime import datetime, timedelta
 import pandas as pd
 
+# 모듈 버전 정보
+VERSION = "v0.1.0"
+
 def show_module():
     """LDAP 관리 모듈 메인 화면"""
     st.title("LDAP 관리")
+
+    # 버전 정보 표시
+    st.caption(f"모듈 버전: {VERSION}")
     
     # 탭 생성
     tab1, tab2, tab3 = st.tabs(["퇴사자 관리", "사용자 검색", "LDAP 설정"])

@@ -8,7 +8,13 @@ import pkgutil
 from pathlib import Path
 import time
 
-VERSION = "v0.2.250407"
+VERSION = "v0.1.1 - 250408"
+
+st.set_page_config(
+    # page_title="SQMS 관리 시스템",
+    page_icon="🔧",
+    initial_sidebar_state="expanded"
+)
 
 # 앱 정보 관리 클래스
 class AppConfig:
@@ -17,9 +23,13 @@ class AppConfig:
         self.config_file = "config.json"
         self.config = self.load_config()
 
-        if "version" not in self.config:
-            self.config["version"] = VERSION
-            self.save_config()
+        if self.config.get("wide_layout", True):
+            st.set_page_config(
+                layout="wide",
+                # page_title="SQMS 관리 시스템",
+                # page_icon="🔧",
+                initial_sidebar_state="expanded"
+            )
     
     def load_config(self):
         """설정 파일 로드"""
@@ -32,6 +42,7 @@ class AppConfig:
                 "app_name": "IT 관리 시스템",
                 "logo_path": "assets/logo.png",
                 "theme": "light",
+                "wide_layout": False,
                 "modules": []
             }
             self.save_config(default_config)
@@ -56,6 +67,13 @@ class AppConfig:
                     if module_info_path.exists():
                         with open(module_info_path, "r", encoding="utf-8") as f:
                             module_info = json.load(f)
+                            # 모듈 버전 정보 로드
+                            try:
+                                module = importlib.import_module(f"modules.{module_info['id']}")
+                                if hasattr(module, 'VERSION'):
+                                    module_info["version"] = module.VERSION
+                            except (ImportError, AttributeError):
+                                pass
                             available_modules.append(module_info)
         
         # 활성화된 모듈 찾기
@@ -88,7 +106,7 @@ class AppConfig:
         self.config["modules"] = [m for m in self.config["modules"] if m["id"] != module_id]
         self.save_config()
     
-    def update_app_info(self, app_name=None, logo_path=None, theme=None):
+    def update_app_info(self, app_name=None, logo_path=None, theme=None, wide_layout=None):
         """앱 정보 업데이트"""
         if app_name:
             self.config["app_name"] = app_name
@@ -96,6 +114,8 @@ class AppConfig:
             self.config["logo_path"] = logo_path
         if theme:
             self.config["theme"] = theme
+        if wide_layout is not None:
+            self.config["wide_layout"] = wide_layout
         self.save_config()
 
 # 애플리케이션 전체에 사용할 CSS 정의
@@ -120,6 +140,22 @@ def add_custom_css():
         background-image: linear-gradient(to right, #FF7A00, #EA002C);
         height: 5px;
         margin-bottom: 20px;
+    }
+
+    /* 모듈 카드 스타일 */
+    .module-card {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 10px;
+        background-color: #f9f9f9;
+    }
+    .module-card h3 {
+        margin-top: 0;
+        color: #333;
+    }
+    .module-card p {
+        color: #666;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -179,7 +215,6 @@ def main():
         st.title(app_config.config["app_name"])
 
         # 버전 정보 표시
-        # st.caption(f"버전: {app_config.config.get('version', VERSION)}")
         st.markdown(f'<p class="version-text">버전: {app_config.config.get("version", VERSION)}</p>', unsafe_allow_html=True)
         
         # 활성화된 모듈 목록
@@ -213,7 +248,7 @@ def main():
 
 def show_dashboard(app_config):
     """메인 대시보드 표시"""
-    st.title("IT 관리 시스템 대시보드")
+    st.title("SQMS 관리 시스템 대시보드")
     
     # 활성화된 모듈 정보 표시
     active_modules, _ = app_config.get_modules()
@@ -228,10 +263,14 @@ def show_dashboard(app_config):
     cols = st.columns(min(3, len(active_modules)))
     for i, module_info in enumerate(active_modules):
         with cols[i % 3]:
-            st.card(
-                title=module_info["name"],
-                text=module_info["description"]
-            )
+            module_version = module_info.get("version", "N/A")
+            st.markdown(f"""
+            <div class="module-card">
+                <h3P{module_info["name"]}</h3>
+                <p>{module_info["description"]}</p>
+                <small>버전: {module_version}</small>
+            <div>
+            """, unsafe_allow_html=True)
 
 def show_settings(app_config):
     """설정 페이지 표시"""
@@ -254,11 +293,13 @@ def show_settings(app_config):
         theme = st.selectbox("테마", ["light", "dark"], 
                             index=0 if app_config.config["theme"] == "light" else 1)
         
+        # 레이아웃 설정
+        wide_layout = st.checkbox("넓은 레이아웃 사용", app_config.config.get("wide_layout", True))
+        
         # 적용 버튼
         if st.button("설정 저장", key="save_app_settings"):
-            app_config.update_app_info(app_name, logo_path, theme)
-            st.success("설정이 저장되었습니다.")
-            st.rerun()
+            app_config.update_app_info(app_name, logo_path, theme, wide_layout)
+            st.success("설정이 저장되었습니다. 변경사항을 적용하려면 앱을 다시 시작하세요.")
     
     # 모듈 관리 탭
     with tab2:
@@ -273,7 +314,8 @@ def show_settings(app_config):
             for module in active_modules:
                 col1, col2 = st.columns([3, 1])
                 with col1:
-                    st.write(f"{module['name']} - {module['description']}")
+                    module_version = module.get("version", "N/A")
+                    st.write(f"{module['name']} - {module['description']} (버전: {module_version})")
                 with col2:
                     if st.button("비활성화", key=f"disable_{module['id']}"):
                         app_config.remove_module(module['id'])
@@ -290,7 +332,8 @@ def show_settings(app_config):
             for module in inactive_modules:
                 col1, col2 = st.columns([3, 1])
                 with col1:
-                    st.write(f"{module['name']} - {module['description']}")
+                    module_version = module.get("version", "N/A")
+                    st.write(f"{module['name']} - {module['description']} (버전: {module_version})")
                 with col2:
                     if st.button("활성화", key=f"enable_{module['id']}"):
                         app_config.add_module(module['id'])
