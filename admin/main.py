@@ -139,6 +139,11 @@ def add_custom_css():
     .clickable-card {
         cursor: pointer;
     }
+    
+    /* 숨겨진 버튼 스타일 */
+    .hidden-button {
+        display: none;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -322,9 +327,12 @@ def show_dashboard(app_config):
             clicked = st.markdown(card_html, unsafe_allow_html=True)
 
             # 숨겨진 버튼으로 모듈 선택 기능 구현
-            if st.button(f"모듈 열기: {module_info['name']}", key=f"open_module_{module_info['id']}", visible=False):
-                st.session_state.selected_module = module_info["name"]
-                st.rerun()
+            with st.container():
+                st.markdown('<div class="hidden-button">', unsafe_allow_html=True)
+                if st.button(f"모듈 열기: {module_info['name']}", key=f"open_module_{module_info['id']}"):
+                    st.session_state.selected_module = module_info["name"]
+                    st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
 
 # 설정 페이지 표시
 def show_settings(app_config):
@@ -457,9 +465,13 @@ def main():
             </div>
             """, unsafe_allow_html=True)
             
-            if st.button("로고 클릭", key="logo_button", visible=False):
-                st.session_state.selected_module = "메인 대시보드"
-                st.rerun()
+            # 숨겨진 버튼
+            with st.container():
+                st.markdown('<div class="hidden-button">', unsafe_allow_html=True)
+                if st.button("로고 클릭", key="logo_button"):
+                    st.session_state.selected_module = "메인 대시보드"
+                    st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
         
         # 타이틀 클릭 시 대시보드로 이동
         st.markdown(f"""
@@ -468,9 +480,13 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
-        if st.button("타이틀 클릭", key="title_button", visible=False):
-            st.session_state.selected_module = "메인 대시보드"
-            st.rerun()
+        # 숨겨진 버튼
+        with st.container():
+            st.markdown('<div class="hidden-button">', unsafe_allow_html=True)
+            if st.button("타이틀 클릭", key="title_button"):
+                st.session_state.selected_module = "메인 대시보드"
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
         # 버전 정보 표시
         st.markdown(f'<p class="version-text">버전: {VERSION}</p>', unsafe_allow_html=True)
