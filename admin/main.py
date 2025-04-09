@@ -6,7 +6,6 @@ import importlib
 import importlib.util
 import sys
 from pathlib import Path
-import time
 import traceback
 
 VERSION = "v0.1.4 - 250409"
@@ -32,6 +31,7 @@ def load_config():
             return loaded_config
     
     # 설정 파일이 없는 경우 기본 설정 저장
+    os.makedirs("config", exist_ok=True)
     with open(config_file, "w", encoding="utf-8") as f:
         json.dump(default_config, f, ensure_ascii=False, indent=4)
     
@@ -52,11 +52,6 @@ st.set_page_config(
 def add_custom_css():
     st.markdown("""
     <style>
-    /* 그라데이션 진행 표시줄 스타일 */
-    .stProgress > div > div {
-        background-image: linear-gradient(to right, #FF7A00, #EA002C);
-    }
-    
     /* 앱 이름 아래 버전 텍스트 스타일 */
     .version-text {
         font-size: 0.8em;
@@ -121,48 +116,8 @@ def add_custom_css():
         position: relative;
         z-index: 1;
     }
-    
-    /* 로고 및 타이틀 링크 스타일 */
-    .logo-link, .title-link {
-        display: block;
-        text-align: center;
-        cursor: pointer;
-        text-decoration: none;
-        color: inherit;
-    }
-    
-    .logo-link:hover, .title-link:hover {
-        opacity: 0.8;
-    }
-    
-    /* 클릭 가능한 모듈 카드 스타일 */
-    .clickable-card {
-        cursor: pointer;
-    }
-    
-    /* 숨겨진 버튼 스타일 */
-    .hidden-button {
-        display: none;
-    }
     </style>
     """, unsafe_allow_html=True)
-
-# 진행 표시줄 유틸리티 함수
-def show_progress_bar(message="처리 중입니다...", steps=10, sleep_time=0.1):
-    """그라데이션 진행 표시줄 표시"""
-    progress_bar = st.progress(0)
-    status_text = st.empty()
-    
-    for i in range(steps):
-        progress = (i + 1) / steps
-        status_text.text(f"{message} ({int(progress * 100)}%)")
-        progress_bar.progress(progress)
-        time.sleep(sleep_time)
-    
-    status_text.text(f"{message} 완료!")
-    time.sleep(0.5)
-    progress_bar.empty()
-    status_text.empty()
 
 # 모듈 로더
 def load_module(module_id):
@@ -205,7 +160,7 @@ def load_module(module_id):
 # 앱 정보 관리 클래스
 class AppConfig:
     def __init__(self):
-        self.config_file = "config.json"
+        self.config_file = "config/config.json"
         self.config = config  # 전역에서 이미 로드한 설정 사용
         
         if "version" not in self.config:
@@ -217,6 +172,7 @@ class AppConfig:
         if updated_config:
             self.config = updated_config
         
+        os.makedirs("config", exist_ok=True)
         with open(self.config_file, "w", encoding="utf-8") as f:
             json.dump(self.config, f, ensure_ascii=False, indent=4)
             
@@ -312,9 +268,9 @@ def show_dashboard(app_config):
         with cols[i % 3]:
             module_version = module_info.get("version", "N/A")
 
-            # 클릭 가능한 모듈 카드
-            card_html = f"""
-            <div class="module-card clickable-card" onclick="parent.postMessage({{type: 'streamlit:setComponentValue', value: '{module_info["name"]}'}}, '*')">
+            # 모듈 카드 UI
+            html_card = f"""
+            <div class="module-card">
                 <div class="gear-icon">⚙️</div>
                 <div class="module-content">
                     <h3>{module_info["name"]}</h3>
@@ -323,16 +279,12 @@ def show_dashboard(app_config):
                 </div>
             </div>
             """
-
-            clicked = st.markdown(card_html, unsafe_allow_html=True)
-
-            # 숨겨진 버튼으로 모듈 선택 기능 구현
-            with st.container():
-                st.markdown('<div class="hidden-button">', unsafe_allow_html=True)
-                if st.button(f"모듈 열기: {module_info['name']}", key=f"open_module_{module_info['id']}"):
-                    st.session_state.selected_module = module_info["name"]
-                    st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown(html_card, unsafe_allow_html=True)
+            
+            # 모듈 열기 버튼
+            if st.button(f"{module_info['name']} 열기", key=f"open_module_{module_info['id']}"):
+                st.session_state.selected_module = module_info["name"]
+                st.rerun()
 
 # 설정 페이지 표시
 def show_settings(app_config):
@@ -445,48 +397,19 @@ def main():
 
     # 커스텀 CSS 추가
     add_custom_css()
-
-    # 그라데이션 헤더 바 추가
-    # st.markdown('<div class="gradient-header"></div>', unsafe_allow_html=True)
     
     # 앱 설정 로드
     app_config = AppConfig()
 
     # 사이드바 설정
     with st.sidebar:
-        # 로고와 앱 이름 표시 - 클릭 시 메인 대시보드로 이동
+        # 로고와 앱 이름 표시 (클릭 기능 제거)
         logo_path = config.get("logo_path")
-
-        # 로고 클릭 시 대시보드로 이동
         if logo_path and os.path.exists(logo_path):
-            st.markdown(f"""
-            <div class="logo-link" onclick="parent.postMessage({{type: 'streamlit:setComponentValue', value: 'logo_clicked'}}, '*')">
-                <img src="{logo_path}" width="100">
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # 숨겨진 버튼
-            with st.container():
-                st.markdown('<div class="hidden-button">', unsafe_allow_html=True)
-                if st.button("로고 클릭", key="logo_button"):
-                    st.session_state.selected_module = "메인 대시보드"
-                    st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
+            st.image(logo_path, width=100)
         
-        # 타이틀 클릭 시 대시보드로 이동
-        st.markdown(f"""
-        <div class="title-link" onclick="parent.postMessage({{type: 'streamlit:setComponentValue', value: 'title_clicked'}}, '*')">
-            <h1>{config.get("app_name")}</h1>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # 숨겨진 버튼
-        with st.container():
-            st.markdown('<div class="hidden-button">', unsafe_allow_html=True)
-            if st.button("타이틀 클릭", key="title_button"):
-                st.session_state.selected_module = "메인 대시보드"
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+        # 타이틀 표시 (클릭 기능 제거)
+        st.title(config.get("app_name"))
 
         # 버전 정보 표시
         st.markdown(f'<p class="version-text">버전: {VERSION}</p>', unsafe_allow_html=True)
@@ -495,30 +418,21 @@ def main():
         active_modules, _ = app_config.get_modules()
         
         # 모듈 선택 옵션
+        module_options = ["메인 대시보드"]
         if active_modules:
-            module_names = ["메인 대시보드"] + [m["name"] for m in active_modules]
-            selected_module = st.selectbox("모듈 선택", module_names, key="module_selector")
-            
-            # 모듈 선택이 바뀌면 세션 상태 업데이트
-            if "selected_module" not in st.session_state or st.session_state.selected_module != selected_module:
-                st.session_state.selected_module = selected_module
-                st.rerun()
-        else:
-            selected_module = "메인 대시보드"
-            st.info("활성화된 모듈이 없습니다. 설정에서 모듈을 추가해주세요.")
+            module_options += [m["name"] for m in active_modules]
         
-        # 설정 버튼
-        if st.button("⚙️ 설정"):
+        selected_option = st.selectbox("모듈 선택", module_options, key="module_selector")
+        
+        # 설정 버튼 - 항상 작동하도록 수정
+        if st.button("⚙️ 설정", key="settings_button"):
             st.session_state.selected_module = "설정"
             st.rerun()
-    
-    # JavaScript 콜백 처리
-    callbacks = ["logo_clicked", "title_clicked"]
-    callbacks.extend([m["name"] for m in active_modules]) if active_modules else None
-    
-    for callback in callbacks:
-        if st.session_state.get("module_selector") == callback:
-            st.session_state.selected_module = callback
+        
+        # 선택 옵션으로 세션 상태 업데이트
+        if selected_option != st.session_state.get("selected_module"):
+            st.session_state.selected_module = selected_option
+            st.rerun()
     
     # 선택된 모듈에 따라 콘텐츠 표시
     if "selected_module" not in st.session_state:

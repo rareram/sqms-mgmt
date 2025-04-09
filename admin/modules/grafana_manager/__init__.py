@@ -657,7 +657,7 @@ def show_version_tab():
     with st.expander("저장소 URL 설정", expanded=False):
         with st.form("repo_url_form"):
             new_repo_url = st.text_input("저장소 URL", value=repo_url, help="GitHub 릴리즈/태그 또는 GitLab 태그 URL")
-            submit = st.from_submit_button("저장")
+            submit = st.form_submit_button("저장")
 
             if submit and new_repo_url:
                 if save_repo_url(MODULE_ID, new_repo_url):
@@ -682,7 +682,7 @@ def show_version_tab():
                 if 'db_version' in grafana_version:
                     st.write(f"DB 버전: {grafana_version['db_version']}")
             else:
-                st.error("Grafana 서버 연결 싪패")
+                st.error("Grafana 서버 연결 실패")
                 st.info("Grafana 설정을 확인해주세요.")
 
 def get_grafana_version():
