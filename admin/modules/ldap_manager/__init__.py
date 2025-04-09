@@ -3,9 +3,12 @@ import ldap
 import os
 from datetime import datetime, timedelta
 import pandas as pd
+from modules.utils.version import show_version_info, save_repo_url, load_repo_url
 
-# 모듈 버전 정보
-VERSION = "v0.1.0"
+# 모듈 ID와 버전 정보
+MODULE_ID = "ldap_manager"
+VERSION = "v0.1.1"
+DEFAULT_REPO_URL = "https://github.com/openldap/openldap/tags"
 
 def show_module():
     """LDAP 관리 모듈 메인 화면"""
@@ -15,7 +18,7 @@ def show_module():
     st.caption(f"모듈 버전: {VERSION}")
     
     # 탭 생성
-    tab1, tab2, tab3 = st.tabs(["퇴사자 관리", "사용자 검색", "LDAP 설정"])
+    tab1, tab2, tab3, tab4 = st.tabs(["퇴사자 관리", "사용자 검색", "LDAP 설정", "버전 정보"])
     
     # 퇴사자 관리 탭
     with tab1:
@@ -28,6 +31,10 @@ def show_module():
     # LDAP 설정 탭
     with tab3:
         show_ldap_settings()
+    
+    # 버전 정보 탭
+    with tab4:
+        show_version_tab()
 
 def show_employee_exit_management():
     """퇴사자 관리 화면"""
@@ -367,3 +374,102 @@ def update_env_file(new_values):
     with open(env_path, "w") as f:
         for key, value in env_vars.items():
             f.write(f"{key}={value}\n")
+
+# 버전 정보 탭
+def show_version_tab():
+    """버전 정보 탭 내용"""
+    st.subheader("버전 정보")
+    
+    # 저장된 저장소 URL 로드 또는 기본값 사용
+    repo_url = load_repo_url(MODULE_ID) or DEFAULT_REPO_URL
+    
+    # 저장소 URL 설정 폼
+    with st.expander("저장소 URL 설정", expanded=False):
+        with st.form("repo_url_form"):
+            new_repo_url = st.text_input("저장소 URL", 
+                                      value=repo_url,
+                                      help="GitHub 릴리스/태그 또는 GitLab 태그 URL")
+            
+            # LDAP 서버 안내
+            st.info("LDAP 서버는 다양한 구현체가 있어 버전 확인을 위한 기본 저장소가 모듈 라이브러리(python-ldap)로 설정되어 있습니다. 필요에 따라 실제 LDAP 서버 구현체(예: OpenLDAP, AD)의 저장소로 변경할 수 있습니다.")
+            
+            submit = st.form_submit_button("저장")
+            
+            if submit and new_repo_url:
+                if save_repo_url(MODULE_ID, new_repo_url):
+                    st.success("저장소 URL이 저장되었습니다.")
+                    repo_url = new_repo_url
+    
+    # 버전 정보 표시
+    show_version_info(VERSION, repo_url)
+    
+    # LDAP 서버 정보 표시
+    st.subheader("LDAP 서버 정보")
+    if st.button("LDAP 서버 연결 확인"):
+        with st.spinner("LDAP 서버 연결을 확인 중입니다..."):
+            ldap_info = check_ldap_server_info()
+            
+            if ldap_info:
+                st.success("LDAP 서버 연결 성공")
+                if 'server_type' in ldap_info:
+                    st.write(f"서버 타입: {ldap_info['server_type']}")
+                if 'vendor_name' in ldap_info:
+                    st.write(f"벤더: {ldap_info['vendor_name']}")
+                if 'vendor_version' in ldap_info:
+                    st.write(f"벤더 버전: {ldap_info['vendor_version']}")
+            else:
+                st.error("LDAP 서버 연결 실패")
+                st.info("LDAP 설정을 확인해주세요.")
+    
+    # Python LDAP 라이브러리 버전 표시
+    st.subheader("LDAP 라이브러리 정보")
+    try:
+        ldap_module_version = ldap.__version__
+        st.write(f"OpenLDAP 버전: {ldap_module_version}")
+    except AttributeError:
+        st.info("OpenLDAP 버전 정보를 가져올 수 없습니다.")
+
+def check_ldap_server_info():
+    """LDAP 서버 정보를 확인합니다."""
+    try:
+        ldap_server = os.environ.get("LDAP_SERVER")
+        ldap_user_dn = os.environ.get("LDAP_USER_DN")
+        ldap_password = os.environ.get("LDAP_PASSWORD")
+        
+        if not all([ldap_server, ldap_user_dn, ldap_password]):
+            return None
+        
+        # LDAP 연결
+        conn = ldap.initialize(ldap_server)
+        conn.simple_bind_s(ldap_user_dn, ldap_password)
+        
+        # 루트 DSE 조회를 통한 서버 정보 확인
+        try:
+            root_dse = conn.search_s("", ldap.SCOPE_BASE, "(objectClass=*)", ['+', '*'])
+            if root_dse and len(root_dse) > 0:
+                attrs = root_dse[0][1]
+                
+                # 서버 정보 추출 - ASCII 문제 수정
+                unknown = b'Unknown'  # ASCII 문자만 사용
+                
+                vendor_name_bytes = attrs.get('vendorName', [unknown])[0]
+                vendor_version_bytes = attrs.get('vendorVersion', [unknown])[0]
+                
+                # 바이트 문자열을 일반 문자열로 디코딩
+                vendor_name = vendor_name_bytes.decode('utf-8', errors='replace')
+                vendor_version = vendor_version_bytes.decode('utf-8', errors='replace')
+                
+                return {
+                    'server_type': 'LDAP',
+                    'vendor_name': vendor_name,
+                    'vendor_version': vendor_version
+                }
+        except Exception:
+            # 루트 DSE 조회 실패시 기본 연결 성공 정보 반환
+            pass
+        
+        conn.unbind_s()
+        return {'server_type': 'LDAP', 'connected': True}
+    except Exception as e:
+        st.error(f"LDAP 서버 정보 조회 실패: {e}")
+        return None

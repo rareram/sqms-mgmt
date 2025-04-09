@@ -7,9 +7,12 @@ from datetime import datetime
 import time
 import urllib.parse
 import base64
+from modules.utils.version import show_version_info, save_repo_url, load_repo_url
 
-# 모듈 버전 정보
-VERSION = "v0.1.0"
+# 모듈 ID와 버전 정보
+MODULE_ID = "grafana_manager"
+VERSION = "v0.1.1"
+DEFAULT_REPO_URL = "https://github.com/grafana/grafana/tags"
 
 def show_module():
     """Grafana 관리 모듈 메인 화면"""
@@ -19,7 +22,7 @@ def show_module():
     st.caption(f"모듈 버전: {VERSION}")
     
     # 탭 생성
-    tab1, tab2, tab3 = st.tabs(["팀 관리", "폴더 권한 관리", "Grafana 설정"])
+    tab1, tab2, tab3, tab4 = st.tabs(["팀 관리", "폴더 권한 관리", "Grafana 설정", "버전 정보"])
     
     # 팀 관리 탭
     with tab1:
@@ -32,6 +35,10 @@ def show_module():
     # Grafana 설정 탭
     with tab3:
         show_grafana_settings()
+    
+    # 버전 정보 탭
+    with tab4:
+        show_version_tab()
 
 def show_team_management():
     """팀 관리 화면"""
@@ -637,3 +644,68 @@ def update_env_file(new_values):
     with open(env_path, "w") as f:
         for key, value in env_vars.items():
             f.write(f"{key}={value}\n")
+
+# 버전 정보 탭
+def show_version_tab():
+    """버전 정보 탭 내용"""
+    st.subheader("버전 정보")
+
+    # 저장된 저장소 URL 로드 또는 기본값 사용
+    repo_url = load_repo_url(MODULE_ID) or DEFAULT_REPO_URL
+
+    # 저장소 URL 설정 폼
+    with st.expander("저장소 URL 설정", expanded=False):
+        with st.form("repo_url_form"):
+            new_repo_url = st.text_input("저장소 URL", value=repo_url, help="GitHub 릴리즈/태그 또는 GitLab 태그 URL")
+            submit = st.from_submit_button("저장")
+
+            if submit and new_repo_url:
+                if save_repo_url(MODULE_ID, new_repo_url):
+                    st.success("저장소 URL이 저장되었습니다.")
+                    repo_url = new_repo_url
+
+    # 버전 정보 표시
+    show_version_info(VERSION, repo_url)
+
+    # Grafana 버전 정보 표시
+    st.subheader("Grafana 서버 정보")
+    if st.button("Grafana 서버 버전 확인"):
+        with st.spinner("Grafana 서버 버전을 확인 중입니다..."):
+            grafana_version = get_grafana_version()
+
+            if grafana_version:
+                st.success("Grafana 서버 연결 성공")
+                if 'version' in grafana_version:
+                    st.write(f"버전: {grafana_version['version']}")
+                if 'commit' in grafana_version:
+                    st.write(f"커밋: {grafana_version['commit']}")
+                if 'db_version' in grafana_version:
+                    st.write(f"DB 버전: {grafana_version['db_version']}")
+            else:
+                st.error("Grafana 서버 연결 싪패")
+                st.info("Grafana 설정을 확인해주세요.")
+
+def get_grafana_version():
+    """Grafana 서버의 버전 정보를 가져옵니다."""
+    try:
+        grafana_url = os.environ.get("GRAFANA_URL")
+        grafana_token = os.environ.get("GRAFANA_API_TOKEN")
+        
+        if not all([grafana_url, grafana_token]):
+            return None
+        
+        headers = {"Authorization": f"Bearer {grafana_token}"}
+        url = f"{grafana_url}/api/health"
+        
+        response = requests.get(url, headers=headers, timeout=5)
+        response.raise_for_status()
+        
+        health_info = response.json()
+        return {
+            "version": health_info.get("version", "알 수 없음"),
+            "commit": health_info.get("commit", "알 수 없음"),
+            "db_version": health_info.get("database", "알 수 없음")
+        }
+    except Exception as e:
+        st.error(f"Grafana 버전 조회 실패: {e}")
+        return None

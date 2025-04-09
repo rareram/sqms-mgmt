@@ -4,9 +4,12 @@ import pandas as pd
 import os
 from datetime import datetime, timedelta
 import time
+from modules.utils.version import show_version_info, save_repo_url, load_repo_url
 
-# 모듈 버전 정보
-VERSION = "v0.1.0"
+# 모듈 ID와 버전 정보
+MODULE_ID = "redmine_manager"
+VERSION = "v0.1.1"
+DEFAULT_REPO_URL = "https://github.com/redmine/redmine/tags"
 
 def show_module():
     """Redmine 관리 모듈 메인 화면"""
@@ -16,7 +19,7 @@ def show_module():
     st.caption(f"모듈 버전: {VERSION}")
     
     # 탭 생성
-    tab1, tab2, tab3 = st.tabs(["프로젝트 관리", "사용자 관리", "Redmine 설정"])
+    tab1, tab2, tab3, tab4 = st.tabs(["프로젝트 관리", "사용자 관리", "Redmine 설정", "버전 정보"])
     
     # 프로젝트 관리 탭
     with tab1:
@@ -29,6 +32,10 @@ def show_module():
     # Redmine 설정 탭
     with tab3:
         show_redmine_settings()
+
+    # 버전 정보 탭
+    with tab4:
+        show_version_tab()
 
 def show_project_management():
     """프로젝트 관리 화면"""
@@ -643,3 +650,89 @@ def update_env_file(new_values):
     with open(env_path, "w") as f:
         for key, value in env_vars.items():
             f.write(f"{key}={value}\n")
+
+# 버전 정보 탭
+def show_version_tab():
+    """버전 정보 탭 내용"""
+    st.subheader("버전 정보")
+
+    # 저장된 저장소 URL 로드 또는 기본값 사용
+    repo_url = load_repo_url(MODULE_ID) or DEFAULT_REPO_URL
+
+    # 저장소 URL 설정 폼
+    with st.expander("저장소 URL 설정", expanded=False):
+        with st.form("repo_url_form"):
+            new_repo_url = st.text_input("저장소 URL", value=repo_url, help="GitHub 릴리즈/태그 또는 GitLab 태그 URL")
+            submit = st.form_submit_button("저장")
+
+            if submit and new_repo_url:
+                if save_repo_url(MODULE_ID, new_repo_url):
+                    st.success("저장소 URL이 저장되었습니다.")
+                    repo_url = new_repo_url
+
+    # 버전 정보 표시
+    show_version_info(VERSION, repo_url)
+
+    # Redmine 버전 정보 표시
+    st.subheader("Redmine 서버 정보")
+    if st.button("Redmine 서버 버전 확인"):
+        with st.spinner("Redmine 서버 버전을 확인 중입니다..."):
+            redmine_version = get_redmine_version()
+
+            if redmine_version:
+                st.success("Redmine 서버 연결 성공")
+                if 'version' in redmine_version:
+                    st.write(f"버전: {redmine_version['version']}")
+                else:
+                    st.write("버전 정보를 확인 할 수 없습니다.")
+            else:
+                st.error("Redmine 서버 연결 실패")
+                st.info("Redmine 설정을 확인해주세요.")
+
+def get_redmine_version():
+    """Redmine 서버의 버전 정보를 가져옵니다."""
+    try:
+        redmine_url = os.environ.get("REDMINE_URL")
+        redmine_api_key = os.environ.get("REDMINE_API_KEY")
+        
+        if not all([redmine_url, redmine_api_key]):
+            return None
+        
+        headers = {"X-Redmine-API-Key": redmine_api_key}
+        
+        # Redmine은 버전 정보를 제공하는 별도의 API가 없어 /users/current.json을 사용
+        url = f"{redmine_url}/users/current.json"
+        
+        response = requests.get(url, headers=headers, timeout=5)
+        response.raise_for_status()
+        
+        # API 버전은 응답 헤더에서 가져올 수 있음
+        api_version = response.headers.get("X-Redmine-API", "알 수 없음")
+        
+        # 추가 정보 수집 시도
+        try:
+            # 일부 Redmine 인스턴스에서는 /info 경로에서 버전 정보 확인 가능
+            info_url = f"{redmine_url}/admin/info"
+            info_response = requests.get(info_url, headers=headers, timeout=5)
+            
+            if info_response.status_code == 200 and "text/html" in info_response.headers.get("Content-Type", ""):
+                # HTML 응답에서 버전 추출 시도
+                html_content = info_response.text
+                import re
+                version_match = re.search(r'Redmine\s+version\s+(\d+\.\d+\.\d+)', html_content)
+                if version_match:
+                    version = version_match.group(1)
+                    return {
+                        "version": version,
+                        "api_version": api_version
+                    }
+        except:
+            pass
+            
+        return {
+            "api_version": api_version,
+            "connected": True
+        }
+    except Exception as e:
+        st.error(f"Redmine 버전 조회 실패: {e}")
+        return None

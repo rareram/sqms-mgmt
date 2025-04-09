@@ -3,10 +3,13 @@ import os
 import json
 from dotenv import load_dotenv
 import importlib
+import importlib.util
+import sys
 from pathlib import Path
 import time
+import traceback
 
-VERSION = "v0.1.3 - 250408"
+VERSION = "v0.1.4 - 250409"
 
 def load_config():
     """설정 파일 로드"""
@@ -76,7 +79,7 @@ def add_custom_css():
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 20px;
-        background-color: #858585;
+        background-color: #f0f0f0;
         transition: all 0.3s ease;
         overflow: hidden;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -142,10 +145,38 @@ def show_progress_bar(message="처리 중입니다...", steps=10, sleep_time=0.1
 def load_module(module_id):
     """모듈 동적 로드"""
     try:
-        module = importlib.import_module(f"modules.{module_id}")
+        # 명시적인 모듈 경로 설정
+        module_path = os.path.join("modules", module_id, "__init__.py")
+        if not os.path.exists(module_path):
+            st.error(f"모듈 파일이 존재하지 않습니다: {module_path}")
+            return None
+            
+        # 모듈 이름 생성
+        module_name = f"modules.{module_id}"
+        
+        # 모듈 스펙 생성
+        spec = importlib.util.spec_from_file_location(module_name, module_path)
+        if spec is None:
+            st.error(f"모듈 스펙을 생성할 수 없습니다: {module_path}")
+            return None
+            
+        # 모듈 생성
+        module = importlib.util.module_from_spec(spec)
+        
+        # 시스템 모듈에 등록
+        sys.modules[module_name] = module
+        
+        # 모듈 로드 및 실행
+        spec.loader.exec_module(module)
+        
         return module
     except ImportError as e:
         st.error(f"모듈 로드 실패: {e}")
+        st.write(traceback.format_exc())
+        return None
+    except Exception as e:
+        st.error(f"모듈 로드 중 오류 발생: {str(e)}")
+        st.write(traceback.format_exc())
         return None
 
 # 앱 정보 관리 클래스
@@ -389,12 +420,22 @@ def main():
 
     # 사이드바 설정
     with st.sidebar:
-        # 로고와 앱 이름 표시
+        # 로고와 앱 이름 표시 - 클릭 시 메인 대시보드로 이동
         logo_path = config.get("logo_path")
         if logo_path and os.path.exists(logo_path):
-            st.image(logo_path, width=100)
+            logo_col = st.container()
+            with logo_col:
+                st.image(logo_path, width=100)
+                if logo_col.button("", key="logo_button", help="메인 대시보드로 이동", use_container_width=True):
+                    st.session_state.selected_module = "메인 대시보드"
+                    st.rerun()
         
-        st.title(config.get("app_name"))
+        title_col = st.container()
+        with title_col:
+            st.title(config.get("app_name"))
+            if title_col.button("", key="title_button", help="메인 대시보드로 이동", use_container_width=True):
+                st.session_state.selected_module = "메인 대시보드"
+                st.rerun()
 
         # 버전 정보 표시
         st.markdown(f'<p class="version-text">버전: {VERSION}</p>', unsafe_allow_html=True)
