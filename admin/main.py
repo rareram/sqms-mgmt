@@ -13,10 +13,10 @@ VERSION = "v0.1.4 - 250409"
 
 def load_config():
     """설정 파일 로드"""
-    config_file = "config.json"
+    config_file = "config/config.json"
     default_config = {
         "app_name": "IT 관리 시스템",
-        "logo_path": "assets/logo.png",
+        "logo_path": "config/logo.png",
         "theme": "light",
         "wide_layout": False,
         "modules": []
@@ -79,7 +79,7 @@ def add_custom_css():
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 20px;
-        background-color: #f0f0f0;
+        background-color: #334759;
         transition: all 0.3s ease;
         overflow: hidden;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -92,12 +92,12 @@ def add_custom_css():
     
     .module-card h3 {
         margin-top: 0;
-        color: #333;
+        color: #d7e7f6;
         font-weight: 600;
     }
     
     .module-card p {
-        color: #666;
+        color: #b0caf9;
         margin-bottom: 15px;
     }
     
@@ -109,7 +109,7 @@ def add_custom_css():
     
     .gear-icon {
         position: absolute;
-        bottom: -25px;
+        bottom: -35px;
         right: -25px;
         font-size: 100px;
         color: rgba(180, 180, 180, 0.1);
@@ -120,6 +120,24 @@ def add_custom_css():
     .module-content {
         position: relative;
         z-index: 1;
+    }
+    
+    /* 로고 및 타이틀 링크 스타일 */
+    .logo-link, .title-link {
+        display: block;
+        text-align: center;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .logo-link:hover, .title-link:hover {
+        opacity: 0.8;
+    }
+    
+    /* 클릭 가능한 모듈 카드 스타일 */
+    .clickable-card {
+        cursor: pointer;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -282,15 +300,16 @@ def show_dashboard(app_config):
         return
     
     # 모듈별 요약 정보 표시
-    st.subheader("활성화된 모듈")
+    st.subheader("🔌 활성화된 모듈")
 
     cols = st.columns(min(3, len(active_modules)))
     for i, module_info in enumerate(active_modules):
         with cols[i % 3]:
             module_version = module_info.get("version", "N/A")
 
-            st.markdown(f"""
-            <div class="module-card">
+            # 클릭 가능한 모듈 카드
+            card_html = f"""
+            <div class="module-card clickable-card" onclick="parent.postMessage({{type: 'streamlit:setComponentValue', value: '{module_info["name"]}'}}, '*')">
                 <div class="gear-icon">⚙️</div>
                 <div class="module-content">
                     <h3>{module_info["name"]}</h3>
@@ -298,7 +317,14 @@ def show_dashboard(app_config):
                     <div class="version">버전: {module_version}</div>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+            """
+
+            clicked = st.markdown(card_html, unsafe_allow_html=True)
+
+            # 숨겨진 버튼으로 모듈 선택 기능 구현
+            if st.button(f"모듈 열기: {module_info['name']}", key=f"open_module_{module_info['id']}", visible=False):
+                st.session_state.selected_module = module_info["name"]
+                st.rerun()
 
 # 설정 페이지 표시
 def show_settings(app_config):
@@ -413,7 +439,7 @@ def main():
     add_custom_css()
 
     # 그라데이션 헤더 바 추가
-    st.markdown('<div class="gradient-header"></div>', unsafe_allow_html=True)
+    # st.markdown('<div class="gradient-header"></div>', unsafe_allow_html=True)
     
     # 앱 설정 로드
     app_config = AppConfig()
@@ -422,20 +448,29 @@ def main():
     with st.sidebar:
         # 로고와 앱 이름 표시 - 클릭 시 메인 대시보드로 이동
         logo_path = config.get("logo_path")
+
+        # 로고 클릭 시 대시보드로 이동
         if logo_path and os.path.exists(logo_path):
-            logo_col = st.container()
-            with logo_col:
-                st.image(logo_path, width=100)
-                if logo_col.button("", key="logo_button", help="메인 대시보드로 이동", use_container_width=True):
-                    st.session_state.selected_module = "메인 대시보드"
-                    st.rerun()
-        
-        title_col = st.container()
-        with title_col:
-            st.title(config.get("app_name"))
-            if title_col.button("", key="title_button", help="메인 대시보드로 이동", use_container_width=True):
+            st.markdown(f"""
+            <div class="logo-link" onclick="parent.postMessage({{type: 'streamlit:setComponentValue', value: 'logo_clicked'}}, '*')">
+                <img src="{logo_path}" width="100">
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("로고 클릭", key="logo_button", visible=False):
                 st.session_state.selected_module = "메인 대시보드"
                 st.rerun()
+        
+        # 타이틀 클릭 시 대시보드로 이동
+        st.markdown(f"""
+        <div class="title-link" onclick="parent.postMessage({{type: 'streamlit:setComponentValue', value: 'title_clicked'}}, '*')">
+            <h1>{config.get("app_name")}</h1>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("타이틀 클릭", key="title_button", visible=False):
+            st.session_state.selected_module = "메인 대시보드"
+            st.rerun()
 
         # 버전 정보 표시
         st.markdown(f'<p class="version-text">버전: {VERSION}</p>', unsafe_allow_html=True)
@@ -446,7 +481,12 @@ def main():
         # 모듈 선택 옵션
         if active_modules:
             module_names = ["메인 대시보드"] + [m["name"] for m in active_modules]
-            selected_module = st.selectbox("모듈 선택", module_names)
+            selected_module = st.selectbox("모듈 선택", module_names, key="module_selector")
+            
+            # 모듈 선택이 바뀌면 세션 상태 업데이트
+            if "selected_module" not in st.session_state or st.session_state.selected_module != selected_module:
+                st.session_state.selected_module = selected_module
+                st.rerun()
         else:
             selected_module = "메인 대시보드"
             st.info("활성화된 모듈이 없습니다. 설정에서 모듈을 추가해주세요.")
@@ -455,16 +495,22 @@ def main():
         if st.button("⚙️ 설정"):
             st.session_state.selected_module = "설정"
             st.rerun()
-        
-        # 세션 상태에서 선택된 모듈 가져오기
-        if "selected_module" in st.session_state:
-            selected_module = st.session_state.selected_module
+    
+    # JavaScript 콜백 처리
+    callbacks = ["logo_clicked", "title_clicked"]
+    callbacks.extend([m["name"] for m in active_modules]) if active_modules else None
+    
+    for callback in callbacks:
+        if st.session_state.get("module_selector") == callback:
+            st.session_state.selected_module = callback
     
     # 선택된 모듈에 따라 콘텐츠 표시
+    if "selected_module" not in st.session_state:
+        st.session_state.selected_module = "메인 대시보드"
+    
+    selected_module = st.session_state.selected_module
+    
     if selected_module == "메인 대시보드" or selected_module == "설정":
-        # 세션 상태 업데이트
-        st.session_state.selected_module = selected_module
-        
         # 해당 화면 표시
         if selected_module == "메인 대시보드":
             show_dashboard(app_config)
@@ -476,10 +522,12 @@ def main():
             if module_info["name"] == selected_module:
                 module = load_module(module_info["id"])
                 if module and hasattr(module, "show_module"):
-                    # 세션 상태 업데이트
-                    st.session_state.selected_module = selected_module
                     module.show_module()
-                break
+                    break
+        else:
+            st.error(f"모듈을 찾을 수 없습니다: {selected_module}")
+            st.session_state.selected_module = "메인 대시보드"
+            st.rerun()
 
 if __name__ == "__main__":
     main()

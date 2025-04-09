@@ -1,6 +1,6 @@
 {
     "app_name": "SQMS 관리 시스템",
-    "logo_path": "assets/logo.png",
+    "logo_path": "config/logo.png",
     "theme": "light",
     "modules": [
         {
