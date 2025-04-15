@@ -19,5 +19,7 @@
             "id": "grafana_manager",
             "enabled": true
         }
-    ]
+    ],
+    "wide_layout": false,
+    "version": "v0.1.4 - 250409"
 }

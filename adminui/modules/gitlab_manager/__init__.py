@@ -7,7 +7,6 @@ from datetime import datetime
 import time
 from io import StringIO
 from modules.utils.version import show_version_info, save_repo_url, load_repo_url
-from progress import show_progress_bar
 
 # 모듈 ID와 버전 정보
 MODULE_ID = "gitlab_manager"
@@ -22,7 +21,7 @@ def show_module():
     st.caption(f"모듈 버전: {VERSION}")
     
     # 탭 생성
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["저장소 관리", "미사용 저장소", "사용자 관리", "GitLab 설정", "버전 정보"])
+    tab1, tab2, tab3, tab4 = st.tabs(["저장소 관리", "미사용 저장소", "사용자 관리", "GitLab 설정"])
     
     # 저장소 관리 탭
     with tab1:
@@ -40,10 +39,6 @@ def show_module():
     with tab4:
         show_gitlab_settings()
     
-    # 버전 정보 탭
-    with tab5:
-        show_version_tab()
-
 def show_repository_management():
     """저장소 관리 화면"""
     st.subheader("저장소 관리")
@@ -55,9 +50,6 @@ def show_repository_management():
     
     # 저장소 목록 불러오기
     if st.button("저장소 목록 갱신", key="refresh_repo_list"):
-        # 진행 표시줄 사용
-        show_progress_bar("저장소 목록을 불러오는 중입니다", steps=10)
-
         repositories = get_all_repositories()
 
         if repositories:
@@ -425,6 +417,69 @@ def show_gitlab_settings():
         else:
             st.error("GitLab 연결에 실패했습니다. 설정을 확인해주세요.")
 
+    # 버전 정보 섹션
+    st.subheader("GitLab 서버 정보")
+
+    # GitLab 서버 버전 확인 버튼
+    if st.button("GitLab 서버 버전 확인"):
+        with st.spinner("GitLab 서버 버전을 확인 중입니다..."):
+            gitlab_version = get_gitlab_version()
+
+            if gitlab_version:
+                st.success("GitLab 서버 연결 성공")
+                st.write(f"버전: {gitlab_version['version']}")
+                if 'revision' in gitlab_version:
+                    st.write(f"리비전: {gitlab_version['revision']}")
+            else:
+                st.error("GitLab 서버 연결 실패")
+                st.info("GitLab 설정을 확인해주세요.")
+    
+    # 모듈 저장소 및 버전 정보
+    with st.expander("모듈 버전 정보", expanded=False):
+        # 저장된 저장소 URL 로드 또는 기본값 사용
+        repo_url = load_repo_url(MODULE_ID) or DEFAULT_REPO_URL
+
+        # 저장소 URL 설정 폼
+        with st.form("repo_url_form"):
+            new_repo_url = st.text_input("저장소 URL", value=repo_url, help="GitHub 릴리즈/태그 또는 GitLab 태그 URL")
+            submit = st.form_submit_button("저장")
+
+            if submit and new_repo_url:
+                if save_repo_url(MODULE_ID, new_repo_url):
+                    st.success("저장소 URL이 저장되었습니다.")
+                    repo_url = new_repo_url
+
+        # 모듈 버전 정보 표시
+        st.write(f"현재 모듈 버전: {VERSION}")
+        
+        # 모듈 최신 버전 확인
+        if st.button("모듈 최신 버전 확인"):
+            with st.spinner("최신 버전 확인 중..."):
+                latest_release = get_latest_version(repo_url)
+                
+                if latest_release:
+                    latest_version = latest_release["version"]
+                    version_status = compare_versions(VERSION, latest_version)
+                    
+                    if version_status == -1:
+                        st.warning(f"새 버전의 모듈이 있습니다: {latest_version}")
+                        st.markdown(f"[{repo_url.split('/')[-2] if '/tags' in repo_url else '저장소'}에서 업데이트 확인]({latest_release['url']})")
+                        
+                        # 릴리스 노트 표시 (GitHub 릴리스인 경우)
+                        if latest_release.get("source") == "github_release" and "body" in latest_release:
+                            with st.expander("릴리스 노트"):
+                                st.markdown(f"## {latest_release['name']}")
+                                st.markdown(latest_release['body'])
+                        
+                    elif version_status == 0:
+                        st.success(f"최신 모듈 버전을 사용 중입니다: {latest_version}")
+                    elif version_status == 1:
+                        st.info(f"개발 버전의 모듈을 사용 중입니다. 최신 안정 버전: {latest_version}")
+                    else:
+                        st.error("버전 비교 실패: 잘못된 버전 형식입니다.")
+                else:
+                    st.error(f"저장소에서 최신 버전 정보를 가져오지 못했습니다: {repo_url}")
+
 def check_gitlab_connection():
     """GitLab 연결 테스트"""
     try:
@@ -728,43 +783,6 @@ def update_env_file(new_values):
     with open(env_path, "w") as f:
         for key, value in env_vars.items():
             f.write(f"{key}={value}\n")
-
-# 버전 정보 탭
-def show_version_tab():
-    """버전 정보 탭 내용"""
-    st.subheader("버전 정보")
-
-    # 저장된 저장소 URL 로드 또는 기본값 사용
-    repo_url = load_repo_url(MODULE_ID) or DEFAULT_REPO_URL
-
-    # 저장소 URL 설정 폼
-    with st.expander("저장소 URL 설정", expanded=False):
-        with st.form("repo_url_form"):
-            new_repo_url = st.text_input("저장소 URL", value=repo_url, help="G장tHub 릴리즈/태그 또는 GitLab 태그 URL")
-            submit = st.form_submit_button("저장")
-
-            if submit and new_repo_url:
-                if save_repo_url(MODULE_ID, new_repo_url):
-                    st.success("저장소 URL이 저장되었습니다.")
-                    repo_url = new_repo_url
-
-    # 버전 정보 표시
-    show_version_info(VERSION, repo_url)
-
-    # GitLab 버전 정보 표시
-    st.subheader("GitLab 서버 정보")
-    if st.button("Gitlab 서버 버전 확인"):
-        with st.spinner("GitLab 서버 버전을 확인 중입니다..."):
-            gitlab_version = get_gitlab_version()
-
-            if gitlab_version:
-                st.success("GitLab 서버 연결 성공")
-                st.write(f"버전: {gitlab_version['version']}")
-                if 'revision' in gitlab_version:
-                    st.write(f"리비전: {gitlab_version['revision']}")
-            else:
-                st.error("GitLab 서버 연결 실패")
-                st.info("GitLab 설정을 확인해주세요.")
 
 def get_gitlab_version():
     """GitLab 서버의 버전 정보를 가져옵니다."""

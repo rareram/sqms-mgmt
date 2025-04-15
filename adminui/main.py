@@ -78,6 +78,7 @@ def add_custom_css():
         transition: all 0.3s ease;
         overflow: hidden;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        cursor: pointer; /* 커서 포인터로 변경하여 클릭 가능함을 표시 */
     }
     
     .module-card:hover {
@@ -270,7 +271,7 @@ def show_dashboard(app_config):
 
             # 모듈 카드 UI
             html_card = f"""
-            <div class="module-card">
+            <div class="module-card" onclick="parent.postMessage({{type: 'streamlit:setComponentValue', value: '{module_info["name"]}', key: 'module_selector'}}, '*')">
                 <div class="gear-icon">⚙️</div>
                 <div class="module-content">
                     <h3>{module_info["name"]}</h3>
@@ -280,11 +281,6 @@ def show_dashboard(app_config):
             </div>
             """
             st.markdown(html_card, unsafe_allow_html=True)
-            
-            # 모듈 열기 버튼
-            if st.button(f"{module_info['name']} 열기", key=f"open_module_{module_info['id']}"):
-                st.session_state.selected_module = module_info["name"]
-                st.rerun()
 
 # 설정 페이지 표시
 def show_settings(app_config):
@@ -403,12 +399,12 @@ def main():
 
     # 사이드바 설정
     with st.sidebar:
-        # 로고와 앱 이름 표시 (클릭 기능 제거)
+        # 로고와 앱 이름 표시
         logo_path = config.get("logo_path")
         if logo_path and os.path.exists(logo_path):
             st.image(logo_path, width=100)
         
-        # 타이틀 표시 (클릭 기능 제거)
+        # 타이틀 표시
         st.title(config.get("app_name"))
 
         # 버전 정보 표시
@@ -427,12 +423,12 @@ def main():
         # 설정 버튼 - 항상 작동하도록 수정
         if st.button("⚙️ 설정", key="settings_button"):
             st.session_state.selected_module = "설정"
-            st.rerun()
+            st.experimental_rerun()
         
         # 선택 옵션으로 세션 상태 업데이트
         if selected_option != st.session_state.get("selected_module"):
             st.session_state.selected_module = selected_option
-            st.rerun()
+            st.experimental_rerun()
     
     # 선택된 모듈에 따라 콘텐츠 표시
     if "selected_module" not in st.session_state:
