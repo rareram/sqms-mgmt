@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 import traceback
 
-VERSION = "v0.1.4 - 250409"
+VERSION = "v0.1.5 - 250416"
 
 def load_config():
     """설정 파일 로드"""
@@ -16,8 +16,6 @@ def load_config():
     default_config = {
         "app_name": "IT 관리 시스템",
         "logo_path": "config/logo.png",
-        "theme": "light",
-        "wide_layout": False,
         "modules": []
     }
     
@@ -40,12 +38,15 @@ def load_config():
 # 설정 로드
 config = load_config()
 
-# 페이지 설정 - wide_layout 적용
+# 페이지 설정 - 항상 wide mode와 dark 테마 사용
 st.set_page_config(
     page_title=config.get("app_name"),
     page_icon="🔧",
-    layout="wide" if config.get("wide_layout", False) else "centered",
-    initial_sidebar_state="expanded"
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={
+        'About': f"SQMS 관리 시스템 - {VERSION}"
+    }
 )
 
 # 애플리케이션 전체에 사용할 CSS 정의
@@ -55,7 +56,7 @@ def add_custom_css():
     /* 앱 이름 아래 버전 텍스트 스타일 */
     .version-text {
         font-size: 0.8em;
-        color: #888;
+        color: var(--text-color-secondary);
         margin-top: -1.5em;
         margin-bottom: 1em;
     }
@@ -70,17 +71,61 @@ def add_custom_css():
     /* 모듈 카드 스타일 */
     .module-card {
         position: relative;
-        border: 1px solid #ddd;
+        border: 1px solid var(--border-color-primary);
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 20px;
-        background-color: #334759;
+        background-color: var(--background-color-primary);
         transition: all 0.3s ease;
         overflow: hidden;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         cursor: pointer; /* 커서 포인터로 변경하여 클릭 가능함을 표시 */
     }
     
+    /* 다크 모드 */
+    [data-theme="dark"] .module-card {
+        background-color: #334759;
+        border-color: #555;
+    }
+
+    /* 다크 모드 제목 색상 */
+    [data-theme="dark"] .module-card h3 {
+        color: #d7e7f6;
+    }
+
+    /* 다크 모드 설명 색상 */
+    [data-theme="dark"] .module-card p {
+        color: #b0caf9;
+    }
+
+    /* 모듈 카드 호버 효과 */
+    [data-theme="dark"] .module-card:hover {
+        background-color: #3c4a5b;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    /* 라이트 모드 */
+    [data-theme="light"] .module-card {
+        background-color: #f7f7f7;
+        border-color: #ddd;
+    }
+
+    /* 라이트 모드 제목 색상 */
+    [data-theme="light"] .module-card h3 {
+        color: #333;
+    }
+
+    /* 라이트 모드 설명 색상 */
+    [data-theme="light"] .module-card p {
+        color: #666;
+    }
+
+    /* 모듈 카드 호버 효과 */
+    [data-theme="light"] .module-card:hover {
+        background-color: #f0f4ff;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
     .module-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 5px 15px rgba(0,0,0,0.1);
@@ -88,18 +133,18 @@ def add_custom_css():
     
     .module-card h3 {
         margin-top: 0;
-        color: #d7e7f6;
+        color: var(--text-color-primary);
         font-weight: 600;
     }
     
     .module-card p {
-        color: #b0caf9;
+        color: var(--text-color-secondary);
         margin-bottom: 15px;
     }
     
     .module-card .version {
         font-size: 0.8em;
-        color: #888;
+        color: var(--text-color-tertiary);
         margin-top: 10px;
     }
     
@@ -108,7 +153,8 @@ def add_custom_css():
         bottom: -35px;
         right: -25px;
         font-size: 100px;
-        color: rgba(180, 180, 180, 0.1);
+        color: var(--text-color-background);
+        opacity: 0.1;
         transform: rotate(30deg);
         z-index: 0;
     }
@@ -118,6 +164,21 @@ def add_custom_css():
         z-index: 1;
     }
     </style>
+
+    /* 테마 감지 스크립트 */
+    <script>
+        // 테마 설정을 감지하고 body에 data-theme 속성 추가
+        const setThemeAttribute = () => {
+            const theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', theme);
+        };
+        
+        // 페이지 로드 시 실행
+        setThemeAttribute();
+        
+        // 시스템 테마 변경 감지
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setThemeAttribute);
+    </script>
     """, unsafe_allow_html=True)
 
 # 모듈 로더
@@ -163,11 +224,7 @@ class AppConfig:
     def __init__(self):
         self.config_file = "config/config.json"
         self.config = config  # 전역에서 이미 로드한 설정 사용
-        
-        if "version" not in self.config:
-            self.config["version"] = VERSION
-            self.save_config()
-    
+
     def save_config(self, updated_config=None):
         """설정 파일 저장"""
         if updated_config:
@@ -236,16 +293,12 @@ class AppConfig:
                 self.save_config()
                 return
     
-    def update_app_info(self, app_name=None, logo_path=None, theme=None, wide_layout=None):
+    def update_app_info(self, app_name=None, logo_path=None):
         """앱 정보 업데이트"""
         if app_name:
             self.config["app_name"] = app_name
         if logo_path:
             self.config["logo_path"] = logo_path
-        if theme:
-            self.config["theme"] = theme
-        if wide_layout is not None:
-            self.config["wide_layout"] = wide_layout
         
         self.save_config()
 
@@ -300,18 +353,11 @@ def show_settings(app_config):
         
             # 로고 설정
             logo_path = st.text_input("로고 경로", config.get("logo_path"))
-        
-            # 테마 설정
-            theme = st.selectbox("테마", ["light", "dark"], 
-                            index=0 if config.get("theme", "light") == "light" else 1)
-        
-            # 레이아웃 설정
-            wide_layout = st.checkbox("넓은 레이아웃 사용", config.get("wide_layout", False))
 
             submit_button = st.form_submit_button("설정 저장")
 
             if submit_button:
-                app_config.update_app_info(app_name, logo_path, theme, wide_layout)
+                app_config.update_app_info(app_name, logo_path)
                 st.success("설정이 저장되었습니다. 변경사항을 적용하려면 앱을 다시 시작하세요.")
         
     # 모듈 관리 탭

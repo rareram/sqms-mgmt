@@ -1,7 +1,6 @@
 {
     "app_name": "SQMS 관리 시스템",
     "logo_path": "config/logo.png",
-    "theme": "light",
     "modules": [
         {
             "id": "ldap_manager",
@@ -19,7 +18,5 @@
             "id": "grafana_manager",
             "enabled": true
         }
-    ],
-    "wide_layout": false,
-    "version": "v0.1.4 - 250409"
+    ]
 }

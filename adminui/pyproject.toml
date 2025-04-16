@@ -1,7 +1,7 @@
 [project]
 name = "adminui"
 version = "0.1.0"
-description = "Add your description here"
+description = "SQMS Admin UI"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
