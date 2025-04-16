@@ -8,7 +8,8 @@ import sys
 from pathlib import Path
 import traceback
 
-VERSION = "v0.1.5 - 250416"
+# 코드 버전 정보 (관리용 및 UI 표시용)
+VERSION = "v0.1.6 - 250416"
 
 def load_config():
     """설정 파일 로드"""
@@ -68,64 +69,32 @@ def add_custom_css():
         margin-bottom: 20px;
     }
 
-    /* 모듈 카드 스타일 */
+    /* 모듈 카드 스타일 - 다크/라이트 모드 대응 */
     .module-card {
         position: relative;
         border: 1px solid var(--border-color-primary);
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 20px;
-        background-color: var(--background-color-primary);
+        background-color: var(--background-color-secondary);
         transition: all 0.3s ease;
         overflow: hidden;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         cursor: pointer; /* 커서 포인터로 변경하여 클릭 가능함을 표시 */
     }
     
-    /* 다크 모드 */
+    /* 다크 모드용 스타일 */
     [data-theme="dark"] .module-card {
         background-color: #334759;
         border-color: #555;
     }
-
-    /* 다크 모드 제목 색상 */
-    [data-theme="dark"] .module-card h3 {
-        color: #d7e7f6;
-    }
-
-    /* 다크 모드 설명 색상 */
-    [data-theme="dark"] .module-card p {
-        color: #b0caf9;
-    }
-
-    /* 모듈 카드 호버 효과 */
-    [data-theme="dark"] .module-card:hover {
-        background-color: #3c4a5b;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    }
-
-    /* 라이트 모드 */
+    
+    /* 라이트 모드용 스타일 */
     [data-theme="light"] .module-card {
         background-color: #f7f7f7;
         border-color: #ddd;
     }
-
-    /* 라이트 모드 제목 색상 */
-    [data-theme="light"] .module-card h3 {
-        color: #333;
-    }
-
-    /* 라이트 모드 설명 색상 */
-    [data-theme="light"] .module-card p {
-        color: #666;
-    }
-
-    /* 모듈 카드 호버 효과 */
-    [data-theme="light"] .module-card:hover {
-        background-color: #f0f4ff;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    }
-
+    
     .module-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 5px 15px rgba(0,0,0,0.1);
@@ -137,9 +106,29 @@ def add_custom_css():
         font-weight: 600;
     }
     
+    /* 다크 모드용 글자 색상 */
+    [data-theme="dark"] .module-card h3 {
+        color: #d7e7f6;
+    }
+    
+    /* 라이트 모드용 글자 색상 */
+    [data-theme="light"] .module-card h3 {
+        color: #333;
+    }
+    
     .module-card p {
         color: var(--text-color-secondary);
         margin-bottom: 15px;
+    }
+    
+    /* 다크 모드용 설명 글자 색상 */
+    [data-theme="dark"] .module-card p {
+        color: #b0caf9;
+    }
+    
+    /* 라이트 모드용 설명 글자 색상 */
+    [data-theme="light"] .module-card p {
+        color: #666;
     }
     
     .module-card .version {
@@ -154,9 +143,9 @@ def add_custom_css():
         right: -25px;
         font-size: 100px;
         color: var(--text-color-background);
-        opacity: 0.1;
         transform: rotate(30deg);
         z-index: 0;
+        opacity: 0.1;
     }
     
     .module-content {
@@ -164,8 +153,7 @@ def add_custom_css():
         z-index: 1;
     }
     </style>
-
-    /* 테마 감지 스크립트 */
+    
     <script>
         // 테마 설정을 감지하고 body에 data-theme 속성 추가
         const setThemeAttribute = () => {
@@ -224,7 +212,7 @@ class AppConfig:
     def __init__(self):
         self.config_file = "config/config.json"
         self.config = config  # 전역에서 이미 로드한 설정 사용
-
+    
     def save_config(self, updated_config=None):
         """설정 파일 저장"""
         if updated_config:
@@ -310,41 +298,38 @@ def show_dashboard(app_config):
     # 활성화된 모듈 정보 표시
     active_modules, _ = app_config.get_modules()
     
-    if not active_modules:
-        st.info("활성화된 모듈이 없습니다. 설정에서 모듈을 추가해주세요.")
-        return
+    # 대시보드를 두 부분으로 나눔: 모듈 카드와 설정
+    tab1, tab2 = st.tabs(["모듈", "시스템 설정"])
     
-    # 모듈별 요약 정보 표시
-    st.subheader("🔌 활성화된 모듈")
-
-    cols = st.columns(min(3, len(active_modules)))
-    for i, module_info in enumerate(active_modules):
-        with cols[i % 3]:
-            module_version = module_info.get("version", "N/A")
-
-            # 모듈 카드 UI
-            html_card = f"""
-            <div class="module-card" onclick="parent.postMessage({{type: 'streamlit:setComponentValue', value: '{module_info["name"]}', key: 'module_selector'}}, '*')">
-                <div class="gear-icon">⚙️</div>
-                <div class="module-content">
-                    <h3>{module_info["name"]}</h3>
-                    <p>{module_info["description"]}</p>
-                    <div class="version">버전: {module_version}</div>
-                </div>
-            </div>
-            """
-            st.markdown(html_card, unsafe_allow_html=True)
-
-# 설정 페이지 표시
-def show_settings(app_config):
-    """설정 페이지 표시"""
-    st.title("설정")
-    
-    # 탭 생성
-    tab1, tab2 = st.tabs(["앱 설정", "모듈 관리"])
-    
-    # 앱 설정 탭
     with tab1:
+        # 모듈 목록이 비어있는 경우
+        if not active_modules:
+            st.info("활성화된 모듈이 없습니다. 시스템 설정 탭에서 모듈을 추가해주세요.")
+        else:
+            # 모듈별 요약 정보 표시
+            st.subheader("🔌 활성화된 모듈")
+            
+            cols = st.columns(min(3, len(active_modules)))
+            for i, module_info in enumerate(active_modules):
+                with cols[i % 3]:
+                    module_version = module_info.get("version", "N/A")
+                    
+                    # 모듈 카드 UI
+                    html_card = f"""
+                    <div class="module-card" onclick="parent.postMessage({{type: 'streamlit:setComponentValue', value: '{module_info["name"]}', key: 'module_selector'}}, '*')">
+                        <div class="gear-icon">⚙️</div>
+                        <div class="module-content">
+                            <h3>{module_info["name"]}</h3>
+                            <p>{module_info["description"]}</p>
+                            <div class="version">버전: {module_version}</div>
+                        </div>
+                    </div>
+                    """
+                    st.markdown(html_card, unsafe_allow_html=True)
+
+    # 설정 탭
+    with tab2:
+        # 앱 설정
         st.subheader("앱 정보 설정")
         
         with st.form(key="app_setting_form"):
@@ -360,8 +345,7 @@ def show_settings(app_config):
                 app_config.update_app_info(app_name, logo_path)
                 st.success("설정이 저장되었습니다. 변경사항을 적용하려면 앱을 다시 시작하세요.")
         
-    # 모듈 관리 탭
-    with tab2:
+        # 모듈 관리 섹션
         st.subheader("모듈 관리")
         
         # 활성화된, 사용 가능한 모듈 목록
@@ -442,6 +426,10 @@ def main():
     
     # 앱 설정 로드
     app_config = AppConfig()
+    
+    # 세션 상태 초기화
+    if "selected_module" not in st.session_state:
+        st.session_state.selected_module = "메인 대시보드"
 
     # 사이드바 설정
     with st.sidebar:
@@ -452,8 +440,8 @@ def main():
         
         # 타이틀 표시
         st.title(config.get("app_name"))
-
-        # 버전 정보 표시
+        
+        # 버전 정보 표시 - UI에 표시
         st.markdown(f'<p class="version-text">버전: {VERSION}</p>', unsafe_allow_html=True)
         
         # 활성화된 모듈 목록
@@ -464,39 +452,29 @@ def main():
         if active_modules:
             module_options += [m["name"] for m in active_modules]
         
-        selected_option = st.selectbox("모듈 선택", module_options, key="module_selector")
-        
-        # 설정 버튼 - 항상 작동하도록 수정
-        if st.button("⚙️ 설정", key="settings_button"):
-            st.session_state.selected_module = "설정"
-            st.experimental_rerun()
-        
         # 선택 옵션으로 세션 상태 업데이트
-        if selected_option != st.session_state.get("selected_module"):
+        selected_option = st.selectbox("모듈 선택", module_options, key="module_selector")
+        if selected_option != st.session_state.selected_module:
             st.session_state.selected_module = selected_option
-            st.experimental_rerun()
+            st.rerun()
     
     # 선택된 모듈에 따라 콘텐츠 표시
-    if "selected_module" not in st.session_state:
-        st.session_state.selected_module = "메인 대시보드"
-    
     selected_module = st.session_state.selected_module
     
-    if selected_module == "메인 대시보드" or selected_module == "설정":
-        # 해당 화면 표시
-        if selected_module == "메인 대시보드":
-            show_dashboard(app_config)
-        else:
-            show_settings(app_config)
+    if selected_module == "메인 대시보드":
+        show_dashboard(app_config)
     else:
         # 활성화된 모듈 중에서 해당 모듈 찾기
+        module_found = False
         for module_info in active_modules:
             if module_info["name"] == selected_module:
                 module = load_module(module_info["id"])
                 if module and hasattr(module, "show_module"):
                     module.show_module()
+                    module_found = True
                     break
-        else:
+        
+        if not module_found:
             st.error(f"모듈을 찾을 수 없습니다: {selected_module}")
             st.session_state.selected_module = "메인 대시보드"
             st.rerun()
