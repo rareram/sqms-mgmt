@@ -361,7 +361,7 @@ def show_grafana_settings():
         new_grafana_url = st.text_input("Grafana 서버 주소", value=grafana_url)
         new_grafana_token = st.text_input("API 토큰", value=grafana_token, type="password")
 
-        st.info("API 토큰은 Grafana 웹 인터페이스의 [설정 > API 키]에서 생성할 수 있습니다.")
+        st.info("API 토큰은 Grafana 웹의 [Administration > User and access > Service accounts] 메뉴에서 생성할 수 있습니다. .")
         
         # 저장 버튼
         submit_button = st.form_submit_button("설정 저장")

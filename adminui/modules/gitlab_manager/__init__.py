@@ -6,11 +6,11 @@ import os
 from datetime import datetime
 import time
 from io import StringIO
-from modules.utils.version import show_version_info, save_repo_url, load_repo_url
+from modules.utils import version
 
 # 모듈 ID와 버전 정보
 MODULE_ID = "gitlab_manager"
-VERSION = "v0.1.3"
+VERSION = "v0.1.4"
 DEFAULT_REPO_URL = "https://gitlab.com/rluna-gitlab/gitlab-ce/-/tags"
 
 def show_module():
@@ -102,7 +102,7 @@ def show_repository_management():
             st.dataframe(df, key="repo_dataframe")
 
             # CSV 다운로드 버튼
-            csv = df.to_csv(index=False)
+            csv = '\ufeff' + df.to_csv(index=False)
             st.download_button(
                 label="저장소 목록 CSV 다운로드",
                 data=csv,
