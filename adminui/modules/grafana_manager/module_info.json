@@ -1,0 +1,7 @@
+{
+    "id": "grafana_manager",
+    "name": "Grafana 관리",
+    "description": "Grafana 팀 및 폴더 권한 관리",
+    "author": "관리자",
+    "dependencies": ["requests", "pandas"]
+}

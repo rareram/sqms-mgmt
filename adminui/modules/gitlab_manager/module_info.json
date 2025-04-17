@@ -1,0 +1,7 @@
+{
+    "id": "gitlab_manager",
+    "name": "GitLab 관리",
+    "description": "GitLab 저장소 및 사용자 관리",
+    "author": "관리자",
+    "dependencies": ["requests", "pandas"]
+}

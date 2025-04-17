@@ -174,3 +174,4 @@ cython_debug/
 gitlab/*.json
 gitlab/*.csv
 grafana/*.csv
+admin/.env

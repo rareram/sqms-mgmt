@@ -1,7 +1,0 @@
-{
-    "id": "redmine_manager",
-    "name": "Redmine 관리",
-    "description": "Redmine 프로젝트 및 사용자 관리",
-    "author": "관리자",
-    "dependencies": ["requests", "pandas"]
-}
