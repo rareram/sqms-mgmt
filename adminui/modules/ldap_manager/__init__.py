@@ -10,7 +10,7 @@ from modules.utils.version import show_version_info, save_repo_url, load_repo_ur
 
 # 모듈 ID와 버전 정보
 MODULE_ID = "ldap_manager"
-VERSION = "v0.1.3"
+VERSION = "v0.1.5"
 DEFAULT_REPO_URL = "https://github.com/openldap/openldap/tags"
 
 # 폰트 설정 함수
@@ -117,10 +117,15 @@ def show_employee_exit_management():
     # 사원 구분 필터 추가
     employee_type = st.radio("사원 구분", ["전체", "정직원", "협력사", "기타"], horizontal=True)
     
+    # OU(조직 단위) 필터 추가
+    st.write("OU(조직 단위) 필터:")
+    show_inactive_only = st.checkbox("비활성화된 계정만 표시", value=True)
+    search_ou = st.text_input("특정 OU 검색 (선택사항, 예: ou=퇴사자,dc=example,dc=com)", "")
+    
     # 퇴사자 조회 버튼
     if st.button("퇴사자 조회"):
         with st.spinner("퇴사자 정보를 조회 중입니다..."):
-            exited_users = get_exited_users(start_date, end_date)
+            exited_users = get_exited_users(start_date, end_date, inactive_only=show_inactive_only, search_ou=search_ou)
             
             if not exited_users:
                 st.info("조회된 퇴사자가 없습니다.")
@@ -151,30 +156,8 @@ def show_employee_exit_management():
                         mime="text/csv"
                     )
                     
-                    # 퇴사자별 서비스 권한 조회
-                    if st.button("서비스 권한 조회"):
-                        with st.spinner("서비스 권한을 조회 중입니다..."):
-                            service_permissions = get_service_permissions(exited_users)
-                            
-                            if not service_permissions:
-                                st.info("조회된 서비스 권한이 없습니다.")
-                            else:
-                                # 서비스별 탭 생성
-                                service_tabs = st.tabs(list(service_permissions.keys()))
-                                
-                                for i, service_name in enumerate(service_permissions.keys()):
-                                    with service_tabs[i]:
-                                        service_df = pd.DataFrame(service_permissions[service_name])
-                                        st.dataframe(service_df)
-                                        
-                                        # CSV 다운로드 버튼
-                                        csv = '\ufeff' + service_df.to_csv(index=False)
-                                        st.download_button(
-                                            label=f"{service_name} CSV 다운로드",
-                                            data=csv,
-                                            file_name=f"{service_name}_권한_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.csv",
-                                            mime="text/csv"
-                                        )
+                    # 안내 메시지 추가
+                    st.info("다운로드한 CSV 파일을 GitLab, Redmine, Grafana 관리 모듈에서 사용하여 서비스 권한을 확인할 수 있습니다.")
 
 def show_user_search():
     """사용자 검색 화면"""
@@ -191,10 +174,13 @@ def show_user_search():
     # 사원 구분 필터 추가
     employee_type = st.radio("사원 구분으로 필터링", ["전체", "정직원", "협력사", "기타"], horizontal=True)
     
+    # 계정 상태 필터
+    account_status = st.radio("계정 상태", ["전체", "활성", "비활성"], horizontal=True)
+    
     # 검색 버튼
     if st.button("검색") and search_term:
         with st.spinner("사용자를 검색 중입니다..."):
-            users = search_users(search_term)
+            users = search_users(search_term, account_status)
             
             if not users:
                 st.info("검색 결과가 없습니다.")
@@ -225,33 +211,8 @@ def show_user_search():
                         mime="text/csv"
                     )
                     
-                    # 선택한 사용자의 서비스 권한 조회
-                    selected_users = st.multiselect("서비스 권한을 조회할 사용자 선택", [user['name'] for user in users])
-                    
-                    if selected_users and st.button("서비스 권한 조회", key="search_permissions"):
-                        with st.spinner("서비스 권한을 조회 중입니다..."):
-                            selected_user_objects = [user for user in users if user['name'] in selected_users]
-                            service_permissions = get_service_permissions(selected_user_objects)
-                            
-                            if not service_permissions:
-                                st.info("조회된 서비스 권한이 없습니다.")
-                            else:
-                                # 서비스별 탭 생성
-                                service_tabs = st.tabs(list(service_permissions.keys()))
-                                
-                                for i, service_name in enumerate(service_permissions.keys()):
-                                    with service_tabs[i]:
-                                        service_df = pd.DataFrame(service_permissions[service_name])
-                                        st.dataframe(service_df)
-
-                                        # CSV 다운로드 버튼 
-                                        csv = '\ufeff' + service_df.to_csv(index=False)
-                                        st.download_button(
-                                            label=f"{service_name} CSV 다운로드",
-                                            data=csv,
-                                            file_name=f"{service_name}_권한_{search_term}.csv",
-                                            mime="text/csv"
-                                        )
+                    # 안내 메시지 추가
+                    st.info("다운로드한 CSV 파일을 GitLab, Redmine, Grafana 관리 모듈에서 사용하여 서비스 권한을 확인할 수 있습니다.")
 
 def show_ldap_settings():
     """LDAP 설정 화면"""
@@ -305,24 +266,30 @@ def show_ldap_settings():
         else:
             st.error("LDAP 연결에 실패했습니다. 설정을 확인해주세요.")
     
-    # LDAP 서버 정보 섹션 (새로 추가)
+    # LDAP 서버 정보 섹션
     st.subheader("LDAP 서버 정보")
     
-    # LDAP 서버 버전 확인 버튼
-    if st.button("LDAP 서버 버전 확인"):
-        with st.spinner("LDAP 서버 버전을 확인 중입니다..."):
-            ldap_version_info = get_ldap_version()
-            
-            if ldap_version_info:
-                st.success("LDAP 서버 연결 성공")
-                st.write(f"버전: {ldap_version_info.get('version', '알 수 없음')}")
-                if 'vendor' in ldap_version_info:
-                    st.write(f"공급 업체: {ldap_version_info['vendor']}")
-            else:
-                st.error("LDAP 서버 연결 실패")
-                st.info("LDAP 설정을 확인해주세요.")
+    # LDAP 타입에 따른 안내 메시지
+    ldap_type = os.environ.get("LDAP_TYPE", "openldap").lower()
+    if ldap_type == "activedirectory":
+        st.info("Active Directory는 버전 정보를 직접 조회하기 어렵습니다. 서버 관리자에게 문의하세요.")
     
-    # 모듈 저장소 및 버전 정보 (GitLab 모듈에서 가져온 패턴)
+    # LDAP 서버 버전 확인 버튼 (OpenLDAP에만 표시)
+    if ldap_type.lower() == "openldap":
+        if st.button("LDAP 서버 버전 확인"):
+            with st.spinner("LDAP 서버 버전을 확인 중입니다..."):
+                ldap_version_info = get_ldap_version()
+                
+                if ldap_version_info:
+                    st.success("LDAP 서버 연결 성공")
+                    st.write(f"버전: {ldap_version_info.get('version', '알 수 없음')}")
+                    if 'vendor' in ldap_version_info:
+                        st.write(f"공급 업체: {ldap_version_info['vendor']}")
+                else:
+                    st.error("LDAP 서버 연결 실패")
+                    st.info("LDAP 설정을 확인해주세요.")
+    
+    # 모듈 저장소 및 버전 정보
     with st.expander("모듈 버전 정보", expanded=False):
         # 저장된 저장소 URL 로드 또는 기본값 사용
         repo_url = load_repo_url(MODULE_ID) or DEFAULT_REPO_URL
@@ -336,9 +303,6 @@ def show_ldap_settings():
                 if save_repo_url(MODULE_ID, new_repo_url):
                     st.success("저장소 URL이 저장되었습니다.")
                     repo_url = new_repo_url
-        
-        # 모듈 버전 정보 표시
-        st.write(f"현재 모듈 버전: {VERSION}")
         
         # 모듈 최신 버전 확인
         if st.button("모듈 최신 버전 확인"):
@@ -387,7 +351,7 @@ def check_ldap_connection():
         return False
 
 def get_ldap_version():
-    """LDAP 서버 버전 정보 조회"""
+    """LDAP 서버 버전 정보 조회 (OpenLDAP 전용)"""
     try:
         ldap_server = os.environ.get("LDAP_SERVER")
         ldap_user_dn = os.environ.get("LDAP_USER_DN")
@@ -423,13 +387,15 @@ def get_ldap_version():
         st.error(f"LDAP 버전 조회 실패: {e}")
         return None
 
-def get_exited_users(start_date, end_date):
+def get_exited_users(start_date, end_date, inactive_only=True, search_ou=""):
     """퇴사자 목록 조회
-    LDAP에서 퇴사일이 시작일과 종료일 사이인 사용자 목록 반환
+    LDAP에서 비활성화된 계정 또는 퇴사일이 시작일과 종료일 사이인 사용자 목록 반환
     
     Args:
         start_date (datetime.date): 시작일
         end_date (datetime.date): 종료일
+        inactive_only (bool): 비활성화된 계정만 조회할지 여부
+        search_ou (str): 특정 OU에서만 검색할 경우 지정
     
     Returns:
         list: 퇴사자 목록 (dict 형태)
@@ -438,11 +404,11 @@ def get_exited_users(start_date, end_date):
     ldap_type = os.environ.get("LDAP_TYPE", "openldap").lower()
     
     if ldap_type == "activedirectory":
-        return get_exited_users_ad(start_date, end_date)
+        return get_exited_users_ad(start_date, end_date, inactive_only, search_ou)
     else:
-        return get_exited_users_openldap(start_date, end_date)
+        return get_exited_users_openldap(start_date, end_date, inactive_only, search_ou)
 
-def get_exited_users_openldap(start_date, end_date):
+def get_exited_users_openldap(start_date, end_date, inactive_only=True, search_ou=""):
     """OpenLDAP 방식의 퇴사자 목록 조회"""
     try:
         ldap_server = os.environ.get("LDAP_SERVER")
@@ -453,14 +419,24 @@ def get_exited_users_openldap(start_date, end_date):
         conn = ldap.initialize(ldap_server)
         conn.simple_bind_s(ldap_user_dn, ldap_password)
         
-        # LDAP 필터: 퇴사일이 시작일과 종료일 사이인 사용자
-        ldap_filter = f"(&(objectClass=person)(exitDate>={start_date.strftime('%Y%m%d')})(exitDate<={end_date.strftime('%Y%m%d')}))"
+        # 검색 베이스 DN 설정
+        base_dn = search_ou if search_ou else ldap_base_dn
+        
+        # LDAP 필터 구성
+        date_filter = f"(&(exitDate>={start_date.strftime('%Y%m%d')})(exitDate<={end_date.strftime('%Y%m%d')}))"
+        status_filter = "(objectClass=person)"
+        
+        if inactive_only:
+            # OpenLDAP에서 비활성화 속성이 있다면 추가 (예: shadowExpire)
+            status_filter = "(&(objectClass=person)(shadowExpire=*))"
+        
+        ldap_filter = f"(&{status_filter}{date_filter})"
         
         # LDAP 검색 속성
-        attrs = ["uid", "cn", "mail", "employeeNumber", "exitDate", "department"]
+        attrs = ["uid", "cn", "mail", "employeeNumber", "exitDate", "department", "shadowExpire"]
         
         # LDAP 검색
-        result = conn.search_s(ldap_base_dn, ldap.SCOPE_SUBTREE, ldap_filter, attrs)
+        result = conn.search_s(base_dn, ldap.SCOPE_SUBTREE, ldap_filter, attrs)
         conn.unbind_s()
         
         # 검색 결과 처리
@@ -468,12 +444,13 @@ def get_exited_users_openldap(start_date, end_date):
         
         for dn, entry in result:
             user = {
-                "uid": entry.get("uid", [b""])[0].decode("utf-8"),
-                "name": entry.get("cn", [b""])[0].decode("utf-8"),
-                "email": entry.get("mail", [b""])[0].decode("utf-8"),
-                "employee_id": entry.get("employeeNumber", [b""])[0].decode("utf-8"),
-                "exit_date": entry.get("exitDate", [b""])[0].decode("utf-8"),
-                "department": entry.get("department", [b""])[0].decode("utf-8")
+                "uid": entry.get("uid", [b""])[0].decode("utf-8") if "uid" in entry else "",
+                "name": entry.get("cn", [b""])[0].decode("utf-8") if "cn" in entry else "",
+                "email": entry.get("mail", [b""])[0].decode("utf-8") if "mail" in entry else "",
+                "employee_id": entry.get("employeeNumber", [b""])[0].decode("utf-8") if "employeeNumber" in entry else "",
+                "exit_date": entry.get("exitDate", [b""])[0].decode("utf-8") if "exitDate" in entry else "",
+                "department": entry.get("department", [b""])[0].decode("utf-8") if "department" in entry else "",
+                "account_status": "비활성" if "shadowExpire" in entry else "활성"
             }
             exited_users.append(user)
         
@@ -482,7 +459,7 @@ def get_exited_users_openldap(start_date, end_date):
         st.error(f"퇴사자 조회 실패: {e}")
         return []
 
-def get_exited_users_ad(start_date, end_date):
+def get_exited_users_ad(start_date, end_date, inactive_only=True, search_ou=""):
     """Active Directory 방식의 퇴사자 목록 조회"""
     try:
         ldap_server = os.environ.get("LDAP_SERVER")
@@ -493,25 +470,51 @@ def get_exited_users_ad(start_date, end_date):
         conn = ldap.initialize(ldap_server)
         conn.simple_bind_s(ldap_user_dn, ldap_password)
         
+        # 검색 베이스 DN 설정
+        base_dn = search_ou if search_ou else ldap_base_dn
+        
         # Active Directory에 맞는 필터
-        # userAccountControl=514는 비활성화된 계정을 의미
+        # userAccountControl=514 또는 userAccountControl=546은 비활성화된 계정을 의미
+        date_filter = ""
         start_date_str = start_date.strftime('%Y%m%d000000.0Z')
         end_date_str = end_date.strftime('%Y%m%d235959.0Z')
         
-        # 정직원 및 협력사 모두 포함하는 필터
-        ldap_filter = f"(&(objectClass=user)(userAccountControl=514)(|(employeeID=A0*)(employeeID=K1*)(employeeID=K9*)))"
+        if inactive_only:
+            # 비활성화된 계정 필터
+            status_filter = "(|(userAccountControl=514)(userAccountControl=546))"
+        else:
+            # 모든 계정 필터
+            status_filter = "(objectClass=user)"
         
-        # LDAP 검색 속성 - AD 속성으로 변경
-        attrs = ["sAMAccountName", "displayName", "mail", "employeeID", "whenChanged", "department"]
+        # whenChanged 필드로 날짜 필터링
+        date_filter = f"(whenChanged>={start_date_str})(whenChanged<={end_date_str})"
+        
+        # 정직원 및 협력사 모두 포함하는 필터
+        employee_filter = "(|(employeeID=A0*)(employeeID=K1*)(employeeID=K9*))"
+        
+        # 최종 필터
+        ldap_filter = f"(&(objectClass=user){status_filter}{date_filter}{employee_filter})"
+        
+        # LDAP 검색 속성
+        attrs = ["sAMAccountName", "displayName", "mail", "employeeID", "whenChanged", "department", "userAccountControl"]
         
         # LDAP 검색
-        result = conn.search_s(ldap_base_dn, ldap.SCOPE_SUBTREE, ldap_filter, attrs)
+        result = conn.search_s(base_dn, ldap.SCOPE_SUBTREE, ldap_filter, attrs)
         conn.unbind_s()
         
         # 검색 결과 처리
         exited_users = []
+        st.text("검색된 사용자 수: " + str(len(result)))
+        st.text("LDAP 모듈에서는 계정상태(활성/비활성)와 퇴사일(whenChanged)을 확인할 수 있습니다. 사용자에 할당된 서비스 권한은 직접 확인할 수 없으니 목록을 CSV로 다운로드하여 각 어플리케이션에서 확인하시기 바랍니다.")
         
         for dn, entry in result:
+            # 계정 상태 확인
+            account_status = "비활성"
+            if "userAccountControl" in entry:
+                uac = int(entry["userAccountControl"][0])
+                if not (uac & 2):  # 비트 2가 비활성화를 의미
+                    account_status = "활성"
+            
             # 속성이 있는지 확인하고 안전하게 디코딩
             user = {
                 "uid": entry.get("sAMAccountName", [b""])[0].decode("utf-8") if "sAMAccountName" in entry else "",
@@ -519,7 +522,8 @@ def get_exited_users_ad(start_date, end_date):
                 "email": entry.get("mail", [b""])[0].decode("utf-8") if "mail" in entry else "",
                 "employee_id": entry.get("employeeID", [b""])[0].decode("utf-8") if "employeeID" in entry else "",
                 "exit_date": entry.get("whenChanged", [b""])[0].decode("utf-8") if "whenChanged" in entry else "",
-                "department": entry.get("department", [b""])[0].decode("utf-8") if "department" in entry else ""
+                "department": entry.get("department", [b""])[0].decode("utf-8") if "department" in entry else "",
+                "account_status": account_status
             }
             exited_users.append(user)
         
@@ -529,12 +533,13 @@ def get_exited_users_ad(start_date, end_date):
         st.write(f"예외 상세 정보: {str(e)}")
         return []
 
-def search_users(search_term):
+def search_users(search_term, account_status="전체"):
     """사용자 검색
     LDAP에서 검색어와 일치하는 사용자 목록 반환
     
     Args:
         search_term (str): 검색어
+        account_status (str): 계정 상태 필터 ('전체', '활성', '비활성')
     
     Returns:
         list: 사용자 목록 (dict 형태)
@@ -543,11 +548,11 @@ def search_users(search_term):
     ldap_type = os.environ.get("LDAP_TYPE", "openldap").lower()
     
     if ldap_type == "activedirectory":
-        return search_users_ad(search_term)
+        return search_users_ad(search_term, account_status)
     else:
-        return search_users_openldap(search_term)
+        return search_users_openldap(search_term, account_status)
 
-def search_users_openldap(search_term):
+def search_users_openldap(search_term, account_status="전체"):
     """OpenLDAP 방식의 사용자 검색"""
     try:
         ldap_server = os.environ.get("LDAP_SERVER")
@@ -558,11 +563,23 @@ def search_users_openldap(search_term):
         conn = ldap.initialize(ldap_server)
         conn.simple_bind_s(ldap_user_dn, ldap_password)
         
+        # 계정 상태 필터 구성
+        status_filter = ""
+        if account_status == "활성":
+            status_filter = "(!(shadowExpire=*))"
+        elif account_status == "비활성":
+            status_filter = "(shadowExpire=*)"
+        
         # LDAP 필터: 검색어와 일치하는 사용자
-        ldap_filter = f"(&(objectClass=person)(|(cn=*{search_term}*)(uid=*{search_term}*)(mail=*{search_term}*)(employeeNumber=*{search_term}*)))"
+        search_filter = f"(|(cn=*{search_term}*)(uid=*{search_term}*)(mail=*{search_term}*)(employeeNumber=*{search_term}*))"
+        
+        if status_filter:
+            ldap_filter = f"(&(objectClass=person){search_filter}{status_filter})"
+        else:
+            ldap_filter = f"(&(objectClass=person){search_filter})"
         
         # LDAP 검색 속성
-        attrs = ["uid", "cn", "mail", "employeeNumber", "department", "title"]
+        attrs = ["uid", "cn", "mail", "employeeNumber", "department", "title", "shadowExpire"]
         
         # LDAP 검색
         result = conn.search_s(ldap_base_dn, ldap.SCOPE_SUBTREE, ldap_filter, attrs)
@@ -572,13 +589,19 @@ def search_users_openldap(search_term):
         users = []
         
         for dn, entry in result:
+            # 계정 상태 확인
+            account_status_val = "활성"
+            if "shadowExpire" in entry:
+                account_status_val = "비활성"
+                
             user = {
-                "uid": entry.get("uid", [b""])[0].decode("utf-8"),
-                "name": entry.get("cn", [b""])[0].decode("utf-8"),
-                "email": entry.get("mail", [b""])[0].decode("utf-8"),
-                "employee_id": entry.get("employeeNumber", [b""])[0].decode("utf-8"),
-                "department": entry.get("department", [b""])[0].decode("utf-8"),
-                "title": entry.get("title", [b""])[0].decode("utf-8")
+                "uid": entry.get("uid", [b""])[0].decode("utf-8") if "uid" in entry else "",
+                "name": entry.get("cn", [b""])[0].decode("utf-8") if "cn" in entry else "",
+                "email": entry.get("mail", [b""])[0].decode("utf-8") if "mail" in entry else "",
+                "employee_id": entry.get("employeeNumber", [b""])[0].decode("utf-8") if "employeeNumber" in entry else "",
+                "department": entry.get("department", [b""])[0].decode("utf-8") if "department" in entry else "",
+                "title": entry.get("title", [b""])[0].decode("utf-8") if "title" in entry else "",
+                "account_status": account_status_val
             }
             users.append(user)
         
@@ -587,7 +610,7 @@ def search_users_openldap(search_term):
         st.error(f"사용자 검색 실패: {e}")
         return []
 
-def search_users_ad(search_term):
+def search_users_ad(search_term, account_status="전체"):
     """Active Directory 방식의 사용자 검색"""
     try:
         ldap_server = os.environ.get("LDAP_SERVER")
@@ -598,11 +621,26 @@ def search_users_ad(search_term):
         conn = ldap.initialize(ldap_server)
         conn.simple_bind_s(ldap_user_dn, ldap_password)
         
+        # 계정 상태 필터 구성
+        status_filter = ""
+        if account_status == "활성":
+            # 활성 계정: userAccountControl 비트 2가 0
+            status_filter = "(!(userAccountControl:1.2.840.113556.1.4.803:=2))"
+        elif account_status == "비활성":
+            # 비활성 계정: userAccountControl 비트 2가 1
+            status_filter = "(userAccountControl:1.2.840.113556.1.4.803:=2)"
+        
         # AD 필터 - 정직원과 협력사 모두 포함
-        ldap_filter = f"(&(objectClass=user)(|(cn=*{search_term}*)(sAMAccountName=*{search_term}*)(mail=*{search_term}*)(employeeID=*{search_term}*)))"
+        search_filter = f"(|(cn=*{search_term}*)(sAMAccountName=*{search_term}*)(mail=*{search_term}*)(employeeID=*{search_term}*))"
+        
+        # 최종 필터
+        if status_filter:
+            ldap_filter = f"(&(objectClass=user){search_filter}{status_filter})"
+        else:
+            ldap_filter = f"(&(objectClass=user){search_filter})"
         
         # LDAP 검색 속성
-        attrs = ["sAMAccountName", "displayName", "mail", "employeeID", "department", "title"]
+        attrs = ["sAMAccountName", "displayName", "mail", "employeeID", "department", "title", "userAccountControl"]
         
         # LDAP 검색
         result = conn.search_s(ldap_base_dn, ldap.SCOPE_SUBTREE, ldap_filter, attrs)
@@ -612,6 +650,13 @@ def search_users_ad(search_term):
         users = []
         
         for dn, entry in result:
+            # 계정 상태 확인
+            account_status_val = "활성"
+            if "userAccountControl" in entry:
+                uac = int(entry["userAccountControl"][0])
+                if uac & 2:  # 비트 2가 비활성화를 의미
+                    account_status_val = "비활성"
+            
             # 속성이 있는지 확인하고 안전하게 디코딩
             user = {
                 "uid": entry.get("sAMAccountName", [b""])[0].decode("utf-8") if "sAMAccountName" in entry else "",
@@ -619,7 +664,8 @@ def search_users_ad(search_term):
                 "email": entry.get("mail", [b""])[0].decode("utf-8") if "mail" in entry else "",
                 "employee_id": entry.get("employeeID", [b""])[0].decode("utf-8") if "employeeID" in entry else "",
                 "department": entry.get("department", [b""])[0].decode("utf-8") if "department" in entry else "",
-                "title": entry.get("title", [b""])[0].decode("utf-8") if "title" in entry else ""
+                "title": entry.get("title", [b""])[0].decode("utf-8") if "title" in entry else "",
+                "account_status": account_status_val
             }
             users.append(user)
         
@@ -628,66 +674,6 @@ def search_users_ad(search_term):
         st.error(f"사용자 검색 실패: {e}")
         st.write(f"예외 상세 정보: {str(e)}")
         return []
-
-def get_service_permissions(users):
-    """사용자의 서비스 권한 조회
-    여러 서비스(GitLab, Redmine 등)에서 사용자의 권한 정보 조회
-    
-    Args:
-        users (list): 사용자 목록
-    
-    Returns:
-        dict: 서비스별 권한 정보
-    """
-    # 결과를 저장할 딕셔너리
-    permissions = {
-        "GitLab": [],
-        "Redmine": [],
-        "Grafana": []
-    }
-    
-    # 사용자 ID 목록
-    user_ids = [user["uid"] for user in users]
-    user_emails = [user["email"] for user in users]
-    
-    # GitLab 권한 조회 (예시)
-    try:
-        gitlab_host = os.environ.get("GITLAB_HOST")
-        gitlab_token = os.environ.get("GITLAB_TOKEN")
-        
-        if gitlab_host and gitlab_token:
-            # 여기에 GitLab API 호출 코드 구현
-            # 실제 구현 시 GitLab API를 사용하여 사용자 권한 정보 조회
-            pass
-    except Exception as e:
-        st.error(f"GitLab 권한 조회 실패: {e}")
-    
-    # Redmine 권한 조회 (예시)
-    try:
-        redmine_url = os.environ.get("REDMINE_URL")
-        redmine_api_key = os.environ.get("REDMINE_API_KEY")
-        
-        if redmine_url and redmine_api_key:
-            # 여기에 Redmine API 호출 코드 구현
-            # 실제 구현 시 Redmine API를 사용하여 사용자 권한 정보 조회
-            pass
-    except Exception as e:
-        st.error(f"Redmine 권한 조회 실패: {e}")
-    
-    # Grafana 권한 조회 (예시)
-    try:
-        grafana_url = os.environ.get("GRAFANA_URL")
-        grafana_username = os.environ.get("GRAFANA_USERNAME")
-        grafana_password = os.environ.get("GRAFANA_PASSWORD")
-        
-        if grafana_url and grafana_username and grafana_password:
-            # 여기에 Grafana API 호출 코드 구현
-            # 실제 구현 시 Grafana API를 사용하여 사용자 권한 정보 조회
-            pass
-    except Exception as e:
-        st.error(f"Grafana 권한 조회 실패: {e}")
-    
-    return permissions
 
 def update_env_file(new_values):
     """환경 변수 파일 업데이트 - 주석과 형식 보존
