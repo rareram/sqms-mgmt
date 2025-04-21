@@ -67,6 +67,37 @@ def show_module():
     with tab3:
         show_ldap_settings()
 
+# 사원 구분 관련 함수
+def get_employee_type_name(employee_id):
+    """사번으로 사원 구분 이름 반환"""
+    if not employee_id:
+        return "미분류"
+    
+    # 사번 형식 정규화
+    emp_id = employee_id.strip().upper()
+    
+    if emp_id.startswith("K9"):
+        return "협력사"
+    elif emp_id.startswith("A0") or emp_id.startswith("K1"):
+        return "정직원"
+    else:
+        return "기타"
+
+def filter_employees_by_type(employees, employee_type):
+    """직원 목록을 사원 구분에 따라 필터링"""
+    if employee_type == "전체":
+        return employees
+    
+    filtered = []
+    for emp in employees:
+        emp_id = emp.get("employee_id", "")
+        emp_type = get_employee_type_name(emp_id)
+        
+        if emp_type == employee_type:
+            filtered.append(emp)
+    
+    return filtered
+
 def show_employee_exit_management():
     """퇴사자 관리 화면"""
     st.subheader("퇴사자 관리")
@@ -83,6 +114,9 @@ def show_employee_exit_management():
     with col2:
         end_date = st.date_input("종료일", value=datetime.now())
     
+    # 사원 구분 필터 추가
+    employee_type = st.radio("사원 구분", ["전체", "정직원", "협력사", "기타"], horizontal=True)
+    
     # 퇴사자 조회 버튼
     if st.button("퇴사자 조회"):
         with st.spinner("퇴사자 정보를 조회 중입니다..."):
@@ -91,45 +125,56 @@ def show_employee_exit_management():
             if not exited_users:
                 st.info("조회된 퇴사자가 없습니다.")
             else:
-                st.write(f"총 {len(exited_users)}명의 퇴사자가 조회되었습니다.")
+                # 사원 구분별 필터링
+                if employee_type != "전체":
+                    exited_users = filter_employees_by_type(exited_users, employee_type)
                 
-                # 퇴사자 목록 표시
-                df = pd.DataFrame(exited_users)
-                st.dataframe(df)
+                if not exited_users:
+                    st.info(f"조회된 {employee_type} 퇴사자가 없습니다.")
+                else:
+                    st.write(f"총 {len(exited_users)}명의 {employee_type if employee_type != '전체' else ''} 퇴사자가 조회되었습니다.")
+                    
+                    # 사원 유형 정보 추가
+                    for user in exited_users:
+                        user["사원구분"] = get_employee_type_name(user.get("employee_id", ""))
+                    
+                    # 퇴사자 목록 표시
+                    df = pd.DataFrame(exited_users)
+                    st.dataframe(df)
 
-                # CSV 다운로드 버튼 (UTF-8 BOM 추가)
-                csv = '\ufeff' + df.to_csv(index=False)
-                st.download_button(
-                    label="퇴사자 목록 CSV 다운로드",
-                    data=csv,
-                    file_name=f"퇴사자_목록_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.csv",
-                    mime="text/csv"
-                )
-                
-                # 퇴사자별 서비스 권한 조회
-                if st.button("서비스 권한 조회"):
-                    with st.spinner("서비스 권한을 조회 중입니다..."):
-                        service_permissions = get_service_permissions(exited_users)
-                        
-                        if not service_permissions:
-                            st.info("조회된 서비스 권한이 없습니다.")
-                        else:
-                            # 서비스별 탭 생성
-                            service_tabs = st.tabs(list(service_permissions.keys()))
+                    # CSV 다운로드 버튼 (UTF-8 BOM 추가)
+                    csv = '\ufeff' + df.to_csv(index=False)
+                    st.download_button(
+                        label="퇴사자 목록 CSV 다운로드",
+                        data=csv,
+                        file_name=f"퇴사자_목록_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.csv",
+                        mime="text/csv"
+                    )
+                    
+                    # 퇴사자별 서비스 권한 조회
+                    if st.button("서비스 권한 조회"):
+                        with st.spinner("서비스 권한을 조회 중입니다..."):
+                            service_permissions = get_service_permissions(exited_users)
                             
-                            for i, service_name in enumerate(service_permissions.keys()):
-                                with service_tabs[i]:
-                                    service_df = pd.DataFrame(service_permissions[service_name])
-                                    st.dataframe(service_df)
-                                    
-                                    # CSV 다운로드 버튼
-                                    csv = '\ufeff' + service_df.to_csv(index=False)
-                                    st.download_button(
-                                        label=f"{service_name} CSV 다운로드",
-                                        data=csv,
-                                        file_name=f"{service_name}_권한_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.csv",
-                                        mime="text/csv"
-                                    )
+                            if not service_permissions:
+                                st.info("조회된 서비스 권한이 없습니다.")
+                            else:
+                                # 서비스별 탭 생성
+                                service_tabs = st.tabs(list(service_permissions.keys()))
+                                
+                                for i, service_name in enumerate(service_permissions.keys()):
+                                    with service_tabs[i]:
+                                        service_df = pd.DataFrame(service_permissions[service_name])
+                                        st.dataframe(service_df)
+                                        
+                                        # CSV 다운로드 버튼
+                                        csv = '\ufeff' + service_df.to_csv(index=False)
+                                        st.download_button(
+                                            label=f"{service_name} CSV 다운로드",
+                                            data=csv,
+                                            file_name=f"{service_name}_권한_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.csv",
+                                            mime="text/csv"
+                                        )
 
 def show_user_search():
     """사용자 검색 화면"""
@@ -143,6 +188,9 @@ def show_user_search():
     # 검색 조건
     search_term = st.text_input("검색어 (이름, 사번, 이메일 등)")
     
+    # 사원 구분 필터 추가
+    employee_type = st.radio("사원 구분으로 필터링", ["전체", "정직원", "협력사", "기타"], horizontal=True)
+    
     # 검색 버튼
     if st.button("검색") and search_term:
         with st.spinner("사용자를 검색 중입니다..."):
@@ -151,48 +199,59 @@ def show_user_search():
             if not users:
                 st.info("검색 결과가 없습니다.")
             else:
-                st.write(f"총 {len(users)}명의 사용자가 검색되었습니다.")
+                # 사원 구분별 필터링
+                if employee_type != "전체":
+                    users = filter_employees_by_type(users, employee_type)
                 
-                # 사용자 목록 표시
-                df = pd.DataFrame(users)
-                st.dataframe(df)
+                if not users:
+                    st.info(f"검색된 {employee_type} 사용자가 없습니다.")
+                else:
+                    st.write(f"총 {len(users)}명의 사용자가 검색되었습니다.")
+                    
+                    # 사원 유형 정보 추가
+                    for user in users:
+                        user["사원구분"] = get_employee_type_name(user.get("employee_id", ""))
+                    
+                    # 사용자 목록 표시
+                    df = pd.DataFrame(users)
+                    st.dataframe(df)
 
-                # CSV 다운로드 버튼
-                csv = '\ufeff' + df.to_csv(index=False)
-                st.download_button(
-                    label="사용자 목록 CSV 다운로드",
-                    data=csv,
-                    file_name=f"사용자_검색_{search_term}.csv",
-                    mime="text/csv"
-                )
-                
-                # 선택한 사용자의 서비스 권한 조회
-                selected_users = st.multiselect("서비스 권한을 조회할 사용자 선택", [user['name'] for user in users])
-                
-                if selected_users and st.button("서비스 권한 조회", key="search_permissions"):
-                    with st.spinner("서비스 권한을 조회 중입니다..."):
-                        selected_user_objects = [user for user in users if user['name'] in selected_users]
-                        service_permissions = get_service_permissions(selected_user_objects)
-                        
-                        if not service_permissions:
-                            st.info("조회된 서비스 권한이 없습니다.")
-                        else:
-                            # 서비스별 탭 생성
-                            service_tabs = st.tabs(list(service_permissions.keys()))
+                    # CSV 다운로드 버튼
+                    csv = '\ufeff' + df.to_csv(index=False)
+                    st.download_button(
+                        label="사용자 목록 CSV 다운로드",
+                        data=csv,
+                        file_name=f"사용자_검색_{search_term}.csv",
+                        mime="text/csv"
+                    )
+                    
+                    # 선택한 사용자의 서비스 권한 조회
+                    selected_users = st.multiselect("서비스 권한을 조회할 사용자 선택", [user['name'] for user in users])
+                    
+                    if selected_users and st.button("서비스 권한 조회", key="search_permissions"):
+                        with st.spinner("서비스 권한을 조회 중입니다..."):
+                            selected_user_objects = [user for user in users if user['name'] in selected_users]
+                            service_permissions = get_service_permissions(selected_user_objects)
                             
-                            for i, service_name in enumerate(service_permissions.keys()):
-                                with service_tabs[i]:
-                                    service_df = pd.DataFrame(service_permissions[service_name])
-                                    st.dataframe(service_df)
+                            if not service_permissions:
+                                st.info("조회된 서비스 권한이 없습니다.")
+                            else:
+                                # 서비스별 탭 생성
+                                service_tabs = st.tabs(list(service_permissions.keys()))
+                                
+                                for i, service_name in enumerate(service_permissions.keys()):
+                                    with service_tabs[i]:
+                                        service_df = pd.DataFrame(service_permissions[service_name])
+                                        st.dataframe(service_df)
 
-                                    # CSV 다운로드 버튼 
-                                    csv = '\ufeff' + service_df.to_csv(index=False)
-                                    st.download_button(
-                                        label=f"{service_name} CSV 다운로드",
-                                        data=csv,
-                                        file_name=f"{service_name}_권한_{search_term}.csv",
-                                        mime="text/csv"
-                                    )
+                                        # CSV 다운로드 버튼 
+                                        csv = '\ufeff' + service_df.to_csv(index=False)
+                                        st.download_button(
+                                            label=f"{service_name} CSV 다운로드",
+                                            data=csv,
+                                            file_name=f"{service_name}_권한_{search_term}.csv",
+                                            mime="text/csv"
+                                        )
 
 def show_ldap_settings():
     """LDAP 설정 화면"""
@@ -436,7 +495,11 @@ def get_exited_users_ad(start_date, end_date):
         
         # Active Directory에 맞는 필터
         # userAccountControl=514는 비활성화된 계정을 의미
-        ldap_filter = f"(&(objectClass=user)(userAccountControl=514))"
+        start_date_str = start_date.strftime('%Y%m%d000000.0Z')
+        end_date_str = end_date.strftime('%Y%m%d235959.0Z')
+        
+        # 정직원 및 협력사 모두 포함하는 필터
+        ldap_filter = f"(&(objectClass=user)(userAccountControl=514)(|(employeeID=A0*)(employeeID=K1*)(employeeID=K9*)))"
         
         # LDAP 검색 속성 - AD 속성으로 변경
         attrs = ["sAMAccountName", "displayName", "mail", "employeeID", "whenChanged", "department"]
@@ -535,8 +598,8 @@ def search_users_ad(search_term):
         conn = ldap.initialize(ldap_server)
         conn.simple_bind_s(ldap_user_dn, ldap_password)
         
-        # AD 필터
-        ldap_filter = f"(&(objectClass=user)(|(cn=*{search_term}*)(sAMAccountName=*{search_term}*)(mail=*{search_term}*)))"
+        # AD 필터 - 정직원과 협력사 모두 포함
+        ldap_filter = f"(&(objectClass=user)(|(cn=*{search_term}*)(sAMAccountName=*{search_term}*)(mail=*{search_term}*)(employeeID=*{search_term}*)))"
         
         # LDAP 검색 속성
         attrs = ["sAMAccountName", "displayName", "mail", "employeeID", "department", "title"]

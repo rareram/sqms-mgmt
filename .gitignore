@@ -175,3 +175,4 @@ gitlab/*.json
 gitlab/*.csv
 grafana/*.csv
 admin/.env
+.DS_Store
