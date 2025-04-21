@@ -3,8 +3,6 @@ import ldap
 import os
 from datetime import datetime, timedelta
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
 from pathlib import Path
 from modules.utils.version import show_version_info, save_repo_url, load_repo_url, get_latest_version, compare_versions
 
@@ -12,38 +10,6 @@ from modules.utils.version import show_version_info, save_repo_url, load_repo_ur
 MODULE_ID = "ldap_manager"
 VERSION = "v0.1.5"
 DEFAULT_REPO_URL = "https://github.com/openldap/openldap/tags"
-
-# 폰트 설정 함수
-def set_matplotlib_korean_font():
-    """matplotlib에 한글 폰트 설정"""
-    # 프로젝트 내 폰트 디렉토리 경로
-    font_dir = Path(os.path.dirname(os.path.abspath(__file__))) / "../../assets/fonts"
-    
-    # 시스템에 설치된 폰트 중 한글 폰트 찾기
-    system_fonts = [f.name for f in fm.fontManager.ttflist if any(keyword in f.name.lower() for keyword in ['malgun', 'nanum', 'gulim', 'batang', 'gothic'])]
-    
-    # 프로젝트 내 폰트 디렉토리 검사
-    if font_dir.exists():
-        # 프로젝트 내 폰트 등록
-        font_files = list(font_dir.glob('*.ttf')) + list(font_dir.glob('*.otf'))
-        for font_file in font_files:
-            fm.fontManager.addfont(str(font_file))
-            
-    # 폰트 설정 시도
-    if font_dir.exists() and len(list(font_dir.glob('*.ttf'))) > 0:
-        # 프로젝트 내 첫 번째 폰트 사용
-        font_path = next(font_dir.glob('*.ttf'))
-        plt.rcParams['font.family'] = fm.FontProperties(fname=str(font_path)).get_name()
-    elif system_fonts:
-        # 시스템 한글 폰트 사용
-        plt.rcParams['font.family'] = system_fonts[0]
-    else:
-        # 폰트를 찾을 수 없는 경우 대체 방법
-        plt.rcParams['font.sans-serif'] = ['Arial', 'Tahoma', 'DejaVu Sans', 'Noto Sans', 'Verdana']
-        plt.rcParams['axes.unicode_minus'] = False
-
-# 모듈 시작 시 폰트 설정
-set_matplotlib_korean_font()
 
 def show_module():
     """LDAP 관리 모듈 메인 화면"""
@@ -504,7 +470,6 @@ def get_exited_users_ad(start_date, end_date, inactive_only=True, search_ou=""):
         
         # 검색 결과 처리
         exited_users = []
-        st.text("검색된 사용자 수: " + str(len(result)))
         st.text("LDAP 모듈에서는 계정상태(활성/비활성)와 퇴사일(whenChanged)을 확인할 수 있습니다. 사용자에 할당된 서비스 권한은 직접 확인할 수 없으니 목록을 CSV로 다운로드하여 각 어플리케이션에서 확인하시기 바랍니다.")
         
         for dn, entry in result:
