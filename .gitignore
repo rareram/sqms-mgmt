@@ -176,3 +176,4 @@ gitlab/*.csv
 grafana/*.csv
 admin/.env
 .DS_Store
+nohup.out
