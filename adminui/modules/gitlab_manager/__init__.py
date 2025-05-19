@@ -721,7 +721,7 @@ def show_unused_repositories():
     # 기간 선택
     col1, col2 = st.columns(2)
     with col1:
-        period = st.selectbox("비활성 기간", ["3개월", "6개월", "1년", "2년"])
+        period = st.selectbox("조회 하려는 저장소 미사용 기간 설정:", ["3개월", "6개월", "1년", "2년"])
     
     # 저장소 목록 불러오기
     if st.button("미사용 저장소 조회"):
