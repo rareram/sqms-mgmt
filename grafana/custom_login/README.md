@@ -1,4 +1,4 @@
-주요 기능
+# 주요 기능
 
 - sudo 권한 체크: 스크립트 실행 시 즉시 확인
 - Grafana 설치 확인: systemctl과 which 명령어로 이중 확인
@@ -7,3 +7,11 @@
 - 안전한 파일 교체: 각 단계별 오류 처리
 - 로그 종류 표시: 색상별 로그 메시지
 - 서비스 재시작: 설정 변경 후 프로세스 재시작 및 상태 확인
+
+script_folder/
+├── customize_grafana_v0.1.sh
+└── img/
+    ├── fav32.png
+    ├── grafana_icon.svg
+    ├── g8_login_dark.svg
+    └── g8_login_light.svg
