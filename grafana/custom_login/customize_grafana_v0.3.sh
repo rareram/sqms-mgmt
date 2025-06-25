@@ -10,6 +10,10 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# 전역 변수
+BACKUP_ENABLED=false
+LOGIN_TEXT=""
+
 # 로그 함수
 log_info() {
     echo -e "${BLUE}[INFO]${NC} $1"
@@ -217,47 +221,48 @@ restart_grafana() {
     fi
 }
 
-# 메인 메뉴
-show_menu() {
+# 메인 메뉴 표시
+show_main_menu() {
+    clear
     echo ""
-    echo "=============================================="
-    echo "        Grafana 커스터마이징 스크립트"
-    echo "=============================================="
+    echo "=================================="
+    echo "   Grafana 커스터마이징 스크립트"
+    echo "=================================="
     echo ""
     echo "이 스크립트는 다음 작업을 수행합니다:"
-    echo "• 북마크 아이콘 변경"
-    echo "• 심볼마크 변경"
-    echo "• 로그인 배경 이미지 변경"
-    echo "• 로그인 화면 문구 변경"
-    echo "• Grafana 서비스 재시작"
+    echo "- 북마크 아이콘 교체"
+    echo "- 심볼마크 교체"
+    echo "- 로그인 배경 이미지 교체"
+    echo "- 로그인 화면 문구 변경"
+    echo "- Grafana 서비스 재시작"
     echo ""
 }
 
-# 백업 선택 메뉴
-backup_menu() {
+# 백업 메뉴
+show_backup_menu() {
     while true; do
         echo ""
-        echo "=============================================="
-        echo "              백업 생성 여부"
-        echo "=============================================="
+        echo "=================================="
+        echo "        백업 설정"
+        echo "=================================="
         echo ""
         echo "기존 파일들을 백업하시겠습니까?"
         echo ""
-        echo "1) 예 - 백업 생성 후 진행"
-        echo "2) 아니오 - 백업 없이 진행"
+        echo "1) 예 - 백업 생성 (권장)"
+        echo "2) 아니오 - 백업 생성하지 않음"
         echo ""
         read -p "선택하세요 (1-2): " backup_choice
         
         case $backup_choice in
             1)
-                echo ""
+                BACKUP_ENABLED=true
                 log_info "백업을 생성합니다."
-                return 0
+                break
                 ;;
             2)
-                echo ""
-                log_info "백업을 생성하지 않고 진행합니다."
-                return 1
+                BACKUP_ENABLED=false
+                log_info "백업을 생성하지 않습니다."
+                break
                 ;;
             *)
                 echo ""
@@ -267,13 +272,13 @@ backup_menu() {
     done
 }
 
-# 로그인 문구 선택 메뉴
-login_text_menu() {
+# 로그인 문구 메뉴
+show_login_text_menu() {
     while true; do
         echo ""
-        echo "=============================================="
-        echo "           로그인 화면 문구 선택"
-        echo "=============================================="
+        echo "=================================="
+        echo "      로그인 문구 선택"
+        echo "=================================="
         echo ""
         echo "로그인 화면에 표시할 문구를 선택하세요:"
         echo ""
@@ -284,12 +289,14 @@ login_text_menu() {
         
         case $text_choice in
             1)
-                echo "Integrated Monitoring"
-                return 0
+                LOGIN_TEXT="Integrated Monitoring"
+                log_info "선택된 문구: $LOGIN_TEXT"
+                break
                 ;;
             2)
-                echo "E2E Observability"
-                return 0
+                LOGIN_TEXT="E2E Observability"
+                log_info "선택된 문구: $LOGIN_TEXT"
+                break
                 ;;
             *)
                 echo ""
@@ -300,103 +307,95 @@ login_text_menu() {
 }
 
 # 최종 확인 메뉴
-confirm_execution() {
-    local backup_choice="$1"
-    local login_text="$2"
-    
+show_confirmation() {
     echo ""
-    echo "=============================================="
-    echo "              작업 내용 확인"
-    echo "=============================================="
+    echo "=================================="
+    echo "        작업 확인"
+    echo "=================================="
     echo ""
     echo "다음 작업을 수행합니다:"
     echo ""
-    if [[ $backup_choice -eq 1 ]]; then
-        echo "• 기존 파일 백업 생성"
-    else
-        echo "• 백업 생성하지 않음"
-    fi
-    echo "• 이미지 파일 교체 (북마크, 심볼마크, 로그인 배경)"
-    echo "• 로그인 문구 변경: '$login_text'"
-    echo "• Grafana 서비스 재시작"
+    echo "• 백업 생성: $(if $BACKUP_ENABLED; then echo "예"; else echo "아니오"; fi)"
+    echo "• 이미지 파일 교체: 예"
+    echo "• 로그인 문구 변경: '$LOGIN_TEXT'"
+    echo "• Grafana 서비스 재시작: 예"
     echo ""
     
     while true; do
         read -p "위 작업을 진행하시겠습니까? (y/N): " confirm
-        
         case $confirm in
-            [yY]|[yY][eE][sS])
+            [Yy]*)
                 return 0
                 ;;
-            [nN]|[nN][oO]|"")
+            [Nn]*|"")
                 log_info "작업이 취소되었습니다."
                 exit 0
                 ;;
             *)
-                echo ""
-                log_error "y(예) 또는 n(아니오)을 입력해주세요."
+                echo "y 또는 n을 입력해주세요."
                 ;;
         esac
     done
 }
 
-# 메인 실행 함수
-main() {
-    show_menu
-    
-    # 1. sudo 권한 체크
-    check_sudo
-    
-    # 2. Grafana 설치 확인
-    check_grafana
-    
-    # 3. 파일 존재 확인
-    check_files
-    check_custom_files
-    
-    # 4. 백업 여부 선택
-    backup_menu
-    local backup_choice=$?
-    
-    # 5. 로그인 문구 선택
-    local selected_text=$(login_text_menu)
-    
-    # 6. 최종 확인
-    confirm_execution $backup_choice "$selected_text"
-    
-    # 7. 작업 실행
+# 작업 실행
+execute_tasks() {
     echo ""
-    echo "=============================================="
-    echo "            커스터마이징 작업 시작"
-    echo "=============================================="
+    echo "=================================="
+    echo "        작업 실행"
+    echo "=================================="
     echo ""
     
-    # 백업 생성 (선택한 경우)
-    if [[ $backup_choice -eq 0 ]]; then
+    # 백업 생성
+    if $BACKUP_ENABLED; then
         create_backup
-        echo ""
     fi
     
     # 이미지 파일 교체
     replace_images
-    echo ""
     
     # 로그인 문구 변경
-    change_login_text "$selected_text"
-    echo ""
+    change_login_text "$LOGIN_TEXT"
     
     # Grafana 서비스 재시작
     restart_grafana
     
     echo ""
-    echo "=============================================="
-    echo "              작업 완료"
-    echo "=============================================="
+    echo "=================================="
+    echo "        작업 완료"
+    echo "=================================="
     echo ""
     log_success "모든 작업이 성공적으로 완료되었습니다!"
     echo ""
     log_info "브라우저에서 Grafana 페이지를 새로고침하여 변경사항을 확인하세요."
+    echo "• 북마크 아이콘과 심볼마크가 변경되었습니다."
+    echo "• 로그인 배경 이미지가 변경되었습니다."
+    echo "• 로그인 화면 문구가 '$LOGIN_TEXT'로 변경되었습니다."
     echo ""
+}
+
+# 메인 실행 함수
+main() {
+    # 1. 메인 메뉴 표시
+    show_main_menu
+    
+    # 2. 초기 체크
+    check_sudo
+    check_grafana
+    check_files
+    check_custom_files
+    
+    # 3. 백업 메뉴
+    show_backup_menu
+    
+    # 4. 로그인 문구 메뉴
+    show_login_text_menu
+    
+    # 5. 최종 확인
+    show_confirmation
+    
+    # 6. 작업 실행
+    execute_tasks
 }
 
 # 스크립트 시작점
