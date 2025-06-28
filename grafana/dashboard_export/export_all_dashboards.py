@@ -23,6 +23,7 @@ def setup_session():
         "Authorization": f"Bearer {GRAFANA_TOKEN}",
         "Content-Type": "application/json"
     })
+    session.verify = False  # SSL 인증서 검증 비활성화 (개발 환경에서만 사용)
     return session
 
 def get_all_dashboards(session):
