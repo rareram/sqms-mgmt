@@ -26,6 +26,59 @@ def setup_session():
     session.verify = False  # SSL 인증서 검증 비활성화 (개발 환경에서만 사용)
     return session
 
+def get_all_dashboards_by_folders(session, folder_map):
+    """폴더별로 대시보드 조회 - 30개 제한 우회"""
+    print("📋 폴더별 대시보드 목록을 조회하는 중...")
+    
+    all_dashboards = []
+    
+    # General 폴더 (folderId=0) 먼저 조회
+    print("   📁 General 폴더 조회 중...")
+    general_dashboards = get_dashboards_in_folder(session, 0)
+    all_dashboards.extend(general_dashboards)
+    print(f"      General 폴더: {len(general_dashboards)}개")
+    
+    # 각 폴더별로 조회
+    for folder_id, folder_info in folder_map.items():
+        folder_title = folder_info["title"]
+        print(f"   📁 '{folder_title}' 폴더 조회 중...")
+        
+        folder_dashboards = get_dashboards_in_folder(session, folder_id)
+        all_dashboards.extend(folder_dashboards)
+        print(f"      {folder_title}: {len(folder_dashboards)}개")
+        
+        time.sleep(0.1)  # API 제한 방지
+    
+    # 중복 제거 (혹시 모를)
+    unique_dashboards = {}
+    for dashboard in all_dashboards:
+        unique_dashboards[dashboard["uid"]] = dashboard
+    
+    final_dashboards = list(unique_dashboards.values())
+    
+    print(f"✅ 총 {len(final_dashboards)}개의 대시보드를 발견했습니다. (폴더별 조회)")
+    return final_dashboards
+
+def get_dashboards_in_folder(session, folder_id):
+    """특정 폴더의 대시보드 조회"""
+    url = f"{GRAFANA_URL}/api/search"
+    params = {
+        "type": "dash-db",
+        "folderIds": folder_id,
+        "limit": 1000  # 폴더당 대시보드 수 제한
+    }
+    
+    try:
+        response = session.get(url, params=params)
+        response.raise_for_status()
+        
+        dashboards = response.json()
+        return dashboards
+        
+    except Exception as e:
+        print(f"❌ 폴더 {folder_id} 조회 실패: {e}")
+        return []
+
 def get_all_dashboards(session):
     """모든 대시보드 목록 조회 - Pagination 지원"""
     print("📋 대시보드 목록을 조회하는 중...")
@@ -43,19 +96,21 @@ def get_all_dashboards(session):
         }
         
         try:
-            print(f"   페이지 {page} 조회 중... (URL: {url}?{requests.compat.urlencode(params)})")
+            # print(f"   페이지 {page} 조회 중... (URL: {url}?{requests.compat.urlencode(params)})")
             response = session.get(url, params=params)
             response.raise_for_status()
 
+            dashboards = response.json()
+
             # 응답 헤더 확인
-            for header, value in response.headers.items():
-                if any(keyword in header.lower() for keyword in ['total', 'count', 'page', 'limit']):
-                    print(f"   응답 헤더: {header} = {value}")
+            # for header, value in response.headers.items():
+                # if any(keyword in header.lower() for keyword in ['total', 'count', 'page', 'limit']):
+                    # print(f"   응답 헤더: {header} = {value}")
             
             dashboards = response.json()
             
             if not dashboards:
-                print(f"    페이지 {page}: 빈 응답 - 종료")
+                # print(f"    페이지 {page}: 빈 응답 - 종료")
                 break
             
             all_dashboards.extend(dashboards)
@@ -63,14 +118,14 @@ def get_all_dashboards(session):
             
             # 페이지 크기보다 적게 반환되면 마지막 페이지
             if len(dashboards) < page_size:
-                print(f"   페이지 {page}: 반환된 항목이 {len(dashboards)}개로 페이지 크기({page_size})보다 적음 - 마지막 페이지")
+                # print(f"   페이지 {page}: 반환된 항목이 {len(dashboards)}개로 페이지 크기({page_size})보다 적음 - 마지막 페이지")
                 break
                 
             page += 1
             # 무한 루프 방지
-            if page > 50:  # 최대 5000개 대시보드
-                print("   ⚠️  최대 페이지 수 도달 - 강제 종료")
-                break
+            # if page > 50:  # 최대 5000개 대시보드
+                # print("   ⚠️  최대 페이지 수 도달 - 강제 종료")
+                # break
 
             time.sleep(0.2)  # API 제한 방지
             
