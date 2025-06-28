@@ -43,14 +43,19 @@ def get_all_dashboards(session):
         }
         
         try:
-            print(f"   페이지 {page} 조회 중...")
+            print(f"   페이지 {page} 조회 중... (URL: {url}?{requests.compat.urlencode(params)})")
             response = session.get(url, params=params)
             response.raise_for_status()
+
+            # 응답 헤더 확인
+            for header, value in response.headers.items():
+                if any(keyword in header.lower() for keyword in ['total', 'count', 'page', 'limit']):
+                    print(f"   응답 헤더: {header} = {value}")
             
             dashboards = response.json()
             
             if not dashboards:
-                # 더 이상 데이터가 없으면 종료
+                print(f"    페이지 {page}: 빈 응답 - 종료")
                 break
             
             all_dashboards.extend(dashboards)
@@ -58,14 +63,84 @@ def get_all_dashboards(session):
             
             # 페이지 크기보다 적게 반환되면 마지막 페이지
             if len(dashboards) < page_size:
+                print(f"   페이지 {page}: 반환된 항목이 {len(dashboards)}개로 페이지 크기({page_size})보다 적음 - 마지막 페이지")
                 break
                 
             page += 1
+            # 무한 루프 방지
+            if page > 50:  # 최대 5000개 대시보드
+                print("   ⚠️  최대 페이지 수 도달 - 강제 종료")
+                break
+
             time.sleep(0.2)  # API 제한 방지
             
         except Exception as e:
             print(f"❌ 페이지 {page} 조회 실패: {e}")
             break
+    
+    # 방법 2: offset 방식으로 재시도 (30개로 제한된 경우)
+    if len(all_dashboards) == 30:
+        print("\n🔍 방법 2: offset 방식으로 재시도")
+        all_dashboards = []
+        offset = 0
+        limit = 100
+        
+        while True:
+            url = f"{GRAFANA_URL}/api/search"
+            params = {
+                "type": "dash-db",
+                "limit": limit,
+                "from": offset  # offset 방식
+            }
+            
+            try:
+                print(f"   오프셋 {offset} 조회 중...")
+                response = session.get(url, params=params)
+                response.raise_for_status()
+                
+                dashboards = response.json()
+                
+                if not dashboards:
+                    break
+                
+                all_dashboards.extend(dashboards)
+                print(f"   오프셋 {offset}: {len(dashboards)}개 발견 (누적: {len(all_dashboards)}개)")
+                
+                if len(dashboards) < limit:
+                    break
+                    
+                offset += limit
+                
+                if offset > 5000:  # 무한 루프 방지
+                    break
+                    
+                time.sleep(0.2)
+                
+            except Exception as e:
+                print(f"❌ 오프셋 {offset} 조회 실패: {e}")
+                break
+    
+    # 방법 3: 대용량 limit로 단일 요청 (마지막 수단)
+    if len(all_dashboards) <= 30:
+        print("\n🔍 방법 3: 대용량 단일 요청")
+        url = f"{GRAFANA_URL}/api/search"
+        params = {
+            "type": "dash-db",
+            "limit": 10000  # 매우 큰 값
+        }
+        
+        try:
+            response = session.get(url, params=params)
+            response.raise_for_status()
+            
+            dashboards = response.json()
+            
+            if len(dashboards) > len(all_dashboards):
+                all_dashboards = dashboards
+                print(f"   단일 요청: {len(dashboards)}개 발견")
+            
+        except Exception as e:
+            print(f"❌ 단일 요청 실패: {e}")
     
     print(f"✅ 총 {len(all_dashboards)}개의 대시보드를 발견했습니다.")
     return all_dashboards
