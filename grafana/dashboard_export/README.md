@@ -1,5 +1,20 @@
 # Grafana 대시보드 Export/Import 스크립트
 
+```
+Grafana 대시보드 전체 추출 스크립트
+- 모든 대시보드를 JSON 형태로 추출
+- UID 기반 파일명으로 저장
+- 폴더 구조 정보 포함
+- Pagination 지원으로 모든 대시보드 추출
+- .env 파일로 설정 관리
+
+Grafana 대시보드 업로드 스크립트
+- JSON 파일을 Grafana에 업로드
+- UID 보존 확인
+- 백업 및 버전 관리
+- .env 파일로 설정 관리
+```
+
 ## 파일 구성
 - `export_all_dashboards.py`: 모든 대시보드를 JSON으로 추출
 - `import_dashboard.py`: JSON 파일을 Grafana에 업로드

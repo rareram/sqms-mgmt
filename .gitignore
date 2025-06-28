@@ -177,3 +177,6 @@ grafana/*.csv
 admin/.env
 .DS_Store
 nohup.out
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store

@@ -1,21 +1,17 @@
-#!/usr/bin/env python3
-"""
-Grafana 대시보드 전체 추출 스크립트
-- 모든 대시보드를 JSON 형태로 추출
-- UID 기반 파일명으로 저장
-- 폴더 구조 정보 포함
-"""
-
 import requests
 import json
 import os
 from datetime import datetime
 import time
 from pathlib import Path
+from dotenv import load_dotenv
 
-# 설정 - 실제 환경에 맞게 수정하세요
-GRAFANA_URL = "http://your-grafana-url:3000"  # 예: "http://localhost:3000"
-GRAFANA_TOKEN = "your-admin-api-token-here"   # Admin 권한 API 토큰
+# .env 파일에서 환경변수 로드
+load_dotenv()
+
+# 설정 - .env 파일에서 불러오기
+GRAFANA_URL = os.getenv("GRAFANA_URL")
+GRAFANA_TOKEN = os.getenv("GRAFANA_TOKEN")
 
 # 출력 디렉토리 설정
 EXPORT_DIR = f"grafana_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -30,26 +26,48 @@ def setup_session():
     return session
 
 def get_all_dashboards(session):
-    """모든 대시보드 목록 조회"""
+    """모든 대시보드 목록 조회 - Pagination 지원"""
     print("📋 대시보드 목록을 조회하는 중...")
     
-    url = f"{GRAFANA_URL}/api/search"
-    params = {
-        "type": "dash-db",
-        "limit": 5000  # 충분히 큰 수로 설정
-    }
+    all_dashboards = []
+    page = 1
+    page_size = 100  # 페이지당 항목 수
     
-    try:
-        response = session.get(url, params=params)
-        response.raise_for_status()
+    while True:
+        url = f"{GRAFANA_URL}/api/search"
+        params = {
+            "type": "dash-db",
+            "limit": page_size,
+            "page": page
+        }
         
-        dashboards = response.json()
-        print(f"✅ 총 {len(dashboards)}개의 대시보드를 발견했습니다.")
-        
-        return dashboards
-    except Exception as e:
-        print(f"❌ 대시보드 목록 조회 실패: {e}")
-        return []
+        try:
+            print(f"   페이지 {page} 조회 중...")
+            response = session.get(url, params=params)
+            response.raise_for_status()
+            
+            dashboards = response.json()
+            
+            if not dashboards:
+                # 더 이상 데이터가 없으면 종료
+                break
+            
+            all_dashboards.extend(dashboards)
+            print(f"   페이지 {page}: {len(dashboards)}개 발견 (누적: {len(all_dashboards)}개)")
+            
+            # 페이지 크기보다 적게 반환되면 마지막 페이지
+            if len(dashboards) < page_size:
+                break
+                
+            page += 1
+            time.sleep(0.2)  # API 제한 방지
+            
+        except Exception as e:
+            print(f"❌ 페이지 {page} 조회 실패: {e}")
+            break
+    
+    print(f"✅ 총 {len(all_dashboards)}개의 대시보드를 발견했습니다.")
+    return all_dashboards
 
 def get_folder_info(session):
     """폴더 정보 조회"""
@@ -140,10 +158,57 @@ def export_dashboard(session, dashboard_info, folder_map):
         print(f"❌ 대시보드 추출 실패 [{title}]: {e}")
         return None
 
+def create_export_summary(export_results, folder_map):
+    """추출 결과 요약 생성"""
+    summary = {
+        "exportInfo": {
+            "exportedAt": datetime.now().isoformat(),
+            "totalDashboards": len(export_results),
+            "successfulExports": len([r for r in export_results if r is not None]),
+            "failedExports": len([r for r in export_results if r is None])
+        },
+        "folderStructure": folder_map,
+        "dashboards": [r for r in export_results if r is not None]
+    }
+    
+    # 요약 통계
+    successful_results = [r for r in export_results if r is not None]
+    total_panels = sum(r["panels_count"] for r in successful_results)
+    total_descriptions = sum(r["has_descriptions"] for r in successful_results)
+    
+    summary["statistics"] = {
+        "totalPanels": total_panels,
+        "panelsWithDescription": total_descriptions,
+        "panelsWithoutDescription": total_panels - total_descriptions,
+        "descriptionCoverage": f"{(total_descriptions/total_panels*100):.1f}%" if total_panels > 0 else "0%"
+    }
+    
+    # 요약 파일 저장
+    summary_path = Path(EXPORT_DIR) / "export_summary.json"
+    with open(summary_path, 'w', encoding='utf-8') as f:
+        json.dump(summary, f, indent=2, ensure_ascii=False)
+    
+    print(f"\n📊 추출 요약:")
+    print(f"   - 총 대시보드: {summary['exportInfo']['totalDashboards']}개")
+    print(f"   - 성공: {summary['exportInfo']['successfulExports']}개")
+    print(f"   - 실패: {summary['exportInfo']['failedExports']}개")
+    print(f"   - 총 패널: {total_panels}개")
+    print(f"   - Description 있는 패널: {total_descriptions}개")
+    print(f"   - Description 커버리지: {summary['statistics']['descriptionCoverage']}")
+    print(f"✅ 요약 정보 저장: {summary_path}")
+
 def main():
     """메인 실행 함수"""
     print("🚀 Grafana 대시보드 전체 추출을 시작합니다...")
     print(f"📂 출력 디렉토리: {EXPORT_DIR}")
+    
+    # 환경변수 확인
+    if not GRAFANA_URL or not GRAFANA_TOKEN:
+        print("❌ 환경변수 설정을 확인해주세요!")
+        print("  .env 파일에 다음 변수들을 설정하세요:")
+        print("  GRAFANA_URL=http://your-grafana-server:3000")
+        print("  GRAFANA_TOKEN=your-admin-api-token")
+        return
     
     # 출력 디렉토리 생성
     Path(EXPORT_DIR).mkdir(exist_ok=True)
@@ -160,13 +225,13 @@ def main():
         print(f"❌ Grafana 연결 실패: {e}")
         print("설정을 확인해주세요:")
         print(f"  - GRAFANA_URL: {GRAFANA_URL}")
-        print(f"  - GRAFANA_TOKEN: {'*' * len(GRAFANA_TOKEN) if GRAFANA_TOKEN else 'None'}")
+        print(f"  - GRAFANA_TOKEN: {'설정됨' if GRAFANA_TOKEN else '미설정'}")
         return
     
     # 폴더 정보 조회
     folder_map = get_folder_info(session)
     
-    # 대시보드 목록 조회
+    # 대시보드 목록 조회 (Pagination 적용)
     dashboards = get_all_dashboards(session)
     if not dashboards:
         print("❌ 추출할 대시보드가 없습니다.")
@@ -182,14 +247,11 @@ def main():
         # API 제한 방지를 위한 지연
         time.sleep(0.1)
     
+    # 추출 결과 요약
+    create_export_summary(export_results, folder_map)
+    
     print(f"\n🎉 모든 대시보드 추출이 완료되었습니다!")
     print(f"📂 결과 확인: {EXPORT_DIR}/")
 
 if __name__ == "__main__":
-    # 설정 확인
-    if GRAFANA_URL == "http://your-grafana-url:3000" or GRAFANA_TOKEN == "your-admin-api-token-here":
-        print("❌ 설정을 먼저 수정해주세요!")
-        print("스크립트 상단의 GRAFANA_URL과 GRAFANA_TOKEN을 설정하세요.")
-        exit(1)
-    
     main()
