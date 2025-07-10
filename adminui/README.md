@@ -1,6 +1,6 @@
 # IT 관리 시스템
 
-사내 IT 시스템(LDAP, GitLab, Redmine, Grafana 등)을 통합적으로 관리하기 위한 Streamlit 기반 웹 애플리케이션입니다.
+사내 IT 시스템(LDAP, GitLab, Redmine, Grafana 등)을 통합적으로 관리하기 위한 Streamlit 기반 모듈형 웹 애플리케이션입니다.
 
 ## 주요 기능
 
@@ -11,7 +11,7 @@
 
 ## 시스템 요구사항
 
-- Python 3.8 이상
+- Python 3.10 이상
 - LDAP 서버 접근 권한
 - GitLab, Redmine, Grafana API 접근 권한
 
@@ -19,29 +19,24 @@
 
 1. 저장소 클론
 ```bash
-git clone https://github.com/your-username/it-management-system.git
-cd it-management-system
+git clone https://github.com/rareram/sqms-mgmt.git
+cd sqms-mgmt/adminui
 ```
 
-2. 가상 환경 생성 및 활성화
-```bash
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+2. uv 전용 가상 환경 생성 및 활성화
+```
+uv run main.py
 ```
 
-3. 필요한 패키지 설치
-```bash
-pip install -r requirements.txt
-```
-
-4. 환경 변수 설정
+3. 환경 변수 설정
 `.env` 파일을 생성하고 다음 내용을 작성합니다:
 ```
 # LDAP 서버 정보
 LDAP_SERVER=ldap://your-ldap-server:389
 LDAP_BASE_DN=dc=example,dc=com
-LDAP_USER_DN=cn=admin,dc=example,dc=com
+LDAP_USER_DN=cn=admin,dc=example,dc=com 또는 ldap-id@host.com
 LDAP_PASSWORD=your-ldap-password
+LDAP_TYPE=activedirectory 또는 openldap
 
 # GitLab 서버 정보
 GITLAB_HOST=http://your-gitlab-server
@@ -57,9 +52,17 @@ GRAFANA_USERNAME=admin
 GRAFANA_PASSWORD=your-grafana-password
 ```
 
-5. 애플리케이션 실행
+4. 의존성 패키지 설치 및 애플리케이션 실행
 ```bash
-streamlit run main.py
+uv run streamlit run main.py
+
+# python-ldap 설치 중 오류 발생시 Ubuntu/Debian 계열
+sudo apt-get install gcc build-essential
+sudo apt-get install libldap2-dev libsasl2-dev python3-dev
+# Red hat/CentOS/Rocky Linux 계열
+sudo dnf install openldap-devel
+# macOS (Homebrew 사용)
+brew install openldap
 ```
 
 ## 모듈 구조

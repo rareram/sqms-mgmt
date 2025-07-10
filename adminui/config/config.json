@@ -4,7 +4,7 @@
     "modules": [
         {
             "id": "ldap_manager",
-            "enabled": false
+            "enabled": true
         },
         {
             "id": "gitlab_manager",

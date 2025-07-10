@@ -11,4 +11,4 @@ mkdir -p modules/redmine_manager
 mkdir -p modules/grafana_manager
 
 # 애플리케이션 실행
-uv run streamlit run main.py
+uv run streamlit run main.py&

@@ -9,7 +9,7 @@ from pathlib import Path
 import traceback
 
 # 코드 버전 정보 (관리용 및 UI 표시용)
-VERSION = "v0.1.8 - 250417"
+VERSION = "v0.1.13 - 250421"
 
 def load_config():
     """설정 파일 로드"""
@@ -398,23 +398,49 @@ def show_dashboard(app_config):
 def update_env_file(new_values):
     """환경 변수 파일 업데이트"""
     env_path = ".env"
-    env_vars = {}
+    env_vars = new_values.copy()
     
     if os.path.exists(env_path):
         with open(env_path, "r") as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#"):
-                    key, value = line.split("=", 1)
-                    env_vars[key] = value
-    
-    # 새 값으로 업데이트
-    env_vars.update(new_values)
-    
-    # .env 파일 쓰기
-    with open(env_path, "w") as f:
-        for key, value in env_vars.items():
-            f.write(f"{key}={value}\n")
+            lines = f.readlines()
+        
+        # 수정된 파일 내용 작성
+        with open(env_path, "w") as f:
+            updated_keys = set()
+
+            for line in lines:
+                line = line.rstrip("\n")
+
+                # 주석 및 빈 줄 유지
+                if not line or line.startswith("#"):
+                    f.write(f"{line}\n")
+                    continue
+                
+                # 키=값 라인 처리
+                try:
+                    key, original_value = line.split("=", 1)
+                    key = key.strip()
+
+                    # 새 값이 있으면 업데이트
+                    if key in new_values:
+                        f.write(f"{key}={new_values[key]}\n")
+                        updated_keys.add(key)
+                    else:
+                        # 새 값이 없으면 원래 값 유지
+                        f.write(f"{key}={original_value}\n")
+                except ValueError:
+                    # 잘못된 형식의 라인은 그대로 유지
+                    f.write(f"{line}\n")
+            
+            # 파일에 없는 새 값들 추가
+            for key, value in new_values.items():
+                if key not in updated_keys:
+                    f.write(f"{key}={value}\n")
+    else:
+        # 파일이 없는 경우 새로 생성
+        with open(env_path, "w") as f:
+            for key, value in env_vars.items():
+                f.write(f"{key}={value}\n")
 
 # 메인 애플리케이션
 def main():
@@ -436,7 +462,8 @@ def main():
         # 로고와 앱 이름 표시
         logo_path = config.get("logo_path")
         if logo_path and os.path.exists(logo_path):
-            st.image(logo_path, width=100)
+            # st.image(logo_path, width=100)
+            st.logo(logo_path, size="large")
         
         # 타이틀 표시
         st.title(config.get("app_name"))
