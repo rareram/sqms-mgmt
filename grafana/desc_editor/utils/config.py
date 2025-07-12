@@ -7,6 +7,12 @@ class Config:
     
     def __init__(self):
         load_dotenv()
+    
+    @property
+    def ssl_verify(self) -> bool:
+        """SSL 검증 여부 (개발용 우회 옵션)"""
+        # 환경 변수로 SSL 검증 비활성화 가능
+        return os.getenv('SSL_VERIFY', 'true').lower() != 'false'
         
     @property
     def grafana_url(self) -> str:

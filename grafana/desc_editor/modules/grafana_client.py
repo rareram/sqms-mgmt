@@ -1,7 +1,11 @@
 import requests
 import json
+import urllib3
 from typing import List, Dict, Optional, Any
 from utils.config import config
+
+# SSL 경고 억제 (개발용)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class GrafanaClient:
     """Grafana API 클라이언트"""
@@ -11,6 +15,16 @@ class GrafanaClient:
         self.headers = config.headers
         self.session = requests.Session()
         self.session.headers.update(self.headers)
+        
+        # SSL 검증 설정 (환경 변수로 제어)
+        self.session.verify = config.ssl_verify
+        
+        # 타임아웃 설정
+        self.session.timeout = 30
+        
+        # SSL 검증이 비활성화된 경우 경고 출력
+        if not config.ssl_verify:
+            print("⚠️  WARNING: SSL 검증이 비활성화되었습니다. 개발용으로만 사용하세요!")
     
     def test_connection(self) -> bool:
         """Grafana 연결 테스트"""

@@ -1,6 +1,5 @@
-streamlit
-requests
-python-dotenv
-pandas
-plotly
-safety
+streamlit>=1.39.0
+requests>=2.32.0
+python-dotenv>=1.0.1
+pandas>=2.2.0
+plotly>=5.18.0
