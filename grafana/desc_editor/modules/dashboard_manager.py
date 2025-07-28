@@ -196,3 +196,16 @@ class DashboardManager:
         except Exception as e:
             print(f"패널 검색 실패: {e}")
             return []
+
+    def get_panel_details(self, dashboard_uid: str, panel_id: int) -> Optional[Dict]:
+        """대시보드의 특정 패널 상세 정보 조회"""
+        dashboard_data = self.get_dashboard_details(dashboard_uid)
+        if not dashboard_data:
+            return None
+        
+        panels = dashboard_data.get('dashboard', {}).get('panels', [])
+        for panel in panels:
+            if panel.get('id') == panel_id:
+                return panel
+        
+        return None

@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from modules.dashboard_manager import DashboardManager
+from modules.ai_generator import AIGenerator
 from utils.config import config
 
 # 페이지 설정
@@ -13,6 +14,12 @@ st.set_page_config(
 # 세션 상태 초기화
 if 'dashboard_manager' not in st.session_state:
     st.session_state.dashboard_manager = DashboardManager()
+
+if 'ai_generator' not in st.session_state:
+    st.session_state.ai_generator = AIGenerator()
+
+if 'generated_descriptions' not in st.session_state:
+    st.session_state.generated_descriptions = {}
 
 if 'selected_folder' not in st.session_state:
     st.session_state.selected_folder = None
@@ -145,7 +152,7 @@ def display_dashboard_editor():
     with col3:
         st.metric("Description 없음", summary['panels_without_description'])
     with col4:
-        st.metric("커버리지", f"{summary['description_coverage']}%")
+        st.metric("커버리지", f"{summary['description_coverage']}")
     
     # 탭 생성
     tab1, tab2, tab3 = st.tabs(["📝 패널 편집", "📊 대시보드 정보", "📜 변경 이력"])
@@ -200,13 +207,11 @@ def display_panel_editor(dashboard_uid):
             
             # Description 편집
             current_desc = panel.get('description', '')
-            new_desc = st.text_area(
-                f"Description (패널 ID: {panel['id']})",
-                value=current_desc,
-                height=100,
-                key=f"desc_{panel['id']}"
-            )
             
+            # AI가 생성한 설명이 있으면 사용, 없으면 현재 설명을 사용
+            if panel['id'] in st.session_state.generated_descriptions:
+                current_desc = st.session_state.generated_descriptions.pop(panel['id'])
+
             if new_desc != current_desc:
                 edited_panels[panel['id']] = new_desc
             
@@ -218,6 +223,30 @@ def display_panel_editor(dashboard_uid):
                 save_panel_descriptions(dashboard_uid, edited_panels)
             else:
                 st.info("변경된 내용이 없습니다.")
+
+    # AI 설명 생성 버튼들을 폼 외부에서 처리
+    for i, panel in enumerate(panels):
+        if st.button("🤖 AI로 설명 생성", key=f"ai_btn_{panel['id']}"):
+            with st.spinner("AI가 설명을 생성하는 중..."):
+                panel_details = st.session_state.dashboard_manager.get_panel_details(dashboard_uid, panel['id'])
+                if panel_details:
+                    generated_desc = st.session_state.ai_generator.generate_description(panel_details)
+                    st.session_state.generated_descriptions[panel['id']] = generated_desc
+                    st.rerun()
+                else:
+                    st.error("패널 상세 정보를 가져오는데 실패했습니다.")
+
+    # AI 설명 생성 버튼들을 폼 외부에서 처리
+    for i, panel in enumerate(panels):
+        if st.button("🤖 AI로 설명 생성", key=f"ai_btn_{panel['id']}"):
+            with st.spinner("AI가 설명을 생성하는 중..."):
+                panel_details = st.session_state.dashboard_manager.get_panel_details(dashboard_uid, panel['id'])
+                if panel_details:
+                    generated_desc = st.session_state.ai_generator.generate_description(panel_details)
+                    st.session_state.generated_descriptions[panel['id']] = generated_desc
+                    st.rerun()
+                else:
+                    st.error("패널 상세 정보를 가져오는데 실패했습니다.")
 def save_panel_descriptions(dashboard_uid, edited_panels):
     """패널 Description 저장"""
     success_count = 0
