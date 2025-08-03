@@ -204,7 +204,7 @@ def check_gitlab_tags(repo_url):
             "version": latest_tag["name"].lstrip("v"),
             "url": tag_url,
             "commit": latest_tag.get("commit", {}.get("id", "")),
-            "message": latest_tag.get("messgae", ""),
+            "message": latest_tag.get("message", ""),
             "source": "gitlab_tag"
         }
     except Exception as e:
@@ -292,9 +292,6 @@ def save_repo_url(module_id, repo_url):
         bool: 저장 성공 여부
     """
     try:
-        import json
-        import os
-        
         config_dir = os.path.join("config", "modules")
         os.makedirs(config_dir, exist_ok=True)
         
@@ -325,9 +322,6 @@ def load_repo_url(module_id):
         str: 저장소 URL 또는 None
     """
     try:
-        import json
-        import os
-        
         config_file = os.path.join("config", "modules", f"{module_id}.json")
         
         if os.path.exists(config_file):
