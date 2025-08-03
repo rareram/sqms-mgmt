@@ -9,7 +9,10 @@ from pathlib import Path
 import traceback
 
 # 코드 버전 정보 (관리용 및 UI 표시용)
-VERSION = "v0.1.13 - 250421"
+VERSION = "v0.2.1 - 250801"
+
+# .env 파일 로드
+load_dotenv()
 
 def load_config():
     """설정 파일 로드"""

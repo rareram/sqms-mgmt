@@ -1,0 +1,2221 @@
+{
+  "summary": {
+    "total_panels": 132,
+    "visualization_panels": 116,
+    "row_panels": 16,
+    "panels_with_description": 28,
+    "panels_without_description": 88,
+    "description_coverage": 24.137931034482758
+  },
+  "panel_types": {
+    "bargauge": 1,
+    "gauge": 5,
+    "stat": 5,
+    "timeseries": 105
+  },
+  "panels_needing_description": [
+    {
+      "id": 3,
+      "title": "CPU",
+      "type": "timeseries"
+    },
+    {
+      "id": 24,
+      "title": "Memory Stack",
+      "type": "timeseries"
+    },
+    {
+      "id": 84,
+      "title": "Network Traffic",
+      "type": "timeseries"
+    },
+    {
+      "id": 156,
+      "title": "Disk Space Used",
+      "type": "timeseries"
+    },
+    {
+      "id": 229,
+      "title": "Disk IOps",
+      "type": "timeseries"
+    },
+    {
+      "id": 42,
+      "title": "I/O Usage Read / Write",
+      "type": "timeseries"
+    },
+    {
+      "id": 127,
+      "title": "I/O Utilization",
+      "type": "timeseries"
+    },
+    {
+      "id": 319,
+      "title": "CPU spent seconds in guests (VMs)",
+      "type": "timeseries"
+    },
+    {
+      "id": 136,
+      "title": "Memory Active / Inactive",
+      "type": "timeseries"
+    },
+    {
+      "id": 135,
+      "title": "Memory Committed",
+      "type": "timeseries"
+    },
+    {
+      "id": 191,
+      "title": "Memory Active / Inactive Detail",
+      "type": "timeseries"
+    },
+    {
+      "id": 130,
+      "title": "Memory Writeback and Dirty",
+      "type": "timeseries"
+    },
+    {
+      "id": 138,
+      "title": "Memory Shared and Mapped",
+      "type": "timeseries"
+    },
+    {
+      "id": 131,
+      "title": "Memory Slab",
+      "type": "timeseries"
+    },
+    {
+      "id": 70,
+      "title": "Memory Vmalloc",
+      "type": "timeseries"
+    },
+    {
+      "id": 159,
+      "title": "Memory Bounce",
+      "type": "timeseries"
+    },
+    {
+      "id": 129,
+      "title": "Memory Anonymous",
+      "type": "timeseries"
+    },
+    {
+      "id": 160,
+      "title": "Memory Kernel / CPU",
+      "type": "timeseries"
+    },
+    {
+      "id": 140,
+      "title": "Memory HugePages Counter",
+      "type": "timeseries"
+    },
+    {
+      "id": 71,
+      "title": "Memory HugePages Size",
+      "type": "timeseries"
+    },
+    {
+      "id": 128,
+      "title": "Memory DirectMap",
+      "type": "timeseries"
+    },
+    {
+      "id": 137,
+      "title": "Memory Unevictable and MLocked",
+      "type": "timeseries"
+    },
+    {
+      "id": 132,
+      "title": "Memory NFS",
+      "type": "timeseries"
+    },
+    {
+      "id": 176,
+      "title": "Memory Pages In / Out",
+      "type": "timeseries"
+    },
+    {
+      "id": 22,
+      "title": "Memory Pages Swap In / Out",
+      "type": "timeseries"
+    },
+    {
+      "id": 175,
+      "title": "Memory Page Faults",
+      "type": "timeseries"
+    },
+    {
+      "id": 307,
+      "title": "OOM Killer",
+      "type": "timeseries"
+    },
+    {
+      "id": 260,
+      "title": "Time Synchronized Drift",
+      "type": "timeseries"
+    },
+    {
+      "id": 291,
+      "title": "Time PLL Adjust",
+      "type": "timeseries"
+    },
+    {
+      "id": 168,
+      "title": "Time Synchronized Status",
+      "type": "timeseries"
+    },
+    {
+      "id": 294,
+      "title": "Time Misc",
+      "type": "timeseries"
+    },
+    {
+      "id": 62,
+      "title": "Processes Status",
+      "type": "timeseries"
+    },
+    {
+      "id": 148,
+      "title": "Processes  Forks",
+      "type": "timeseries"
+    },
+    {
+      "id": 149,
+      "title": "Processes Memory",
+      "type": "timeseries"
+    },
+    {
+      "id": 305,
+      "title": "Process schedule stats Running / Waiting",
+      "type": "timeseries"
+    },
+    {
+      "id": 8,
+      "title": "Context Switches / Interrupts",
+      "type": "timeseries"
+    },
+    {
+      "id": 7,
+      "title": "System Load",
+      "type": "timeseries"
+    },
+    {
+      "id": 321,
+      "title": "CPU Frequency Scaling",
+      "type": "timeseries"
+    },
+    {
+      "id": 306,
+      "title": "Schedule timeslices executed by each cpu",
+      "type": "timeseries"
+    },
+    {
+      "id": 151,
+      "title": "Entropy",
+      "type": "timeseries"
+    },
+    {
+      "id": 308,
+      "title": "CPU time spent in user and system contexts",
+      "type": "timeseries"
+    },
+    {
+      "id": 64,
+      "title": "File Descriptors",
+      "type": "timeseries"
+    },
+    {
+      "id": 158,
+      "title": "Hardware temperature monitor",
+      "type": "timeseries"
+    },
+    {
+      "id": 300,
+      "title": "Throttle cooling device",
+      "type": "timeseries"
+    },
+    {
+      "id": 302,
+      "title": "Power supply",
+      "type": "timeseries"
+    },
+    {
+      "id": 297,
+      "title": "Systemd Sockets",
+      "type": "timeseries"
+    },
+    {
+      "id": 298,
+      "title": "Systemd Units State",
+      "type": "timeseries"
+    },
+    {
+      "id": 301,
+      "title": "Disk IOps Discards completed / merged",
+      "type": "timeseries"
+    },
+    {
+      "id": 43,
+      "title": "Filesystem space available",
+      "type": "timeseries"
+    },
+    {
+      "id": 41,
+      "title": "File Nodes Free",
+      "type": "timeseries"
+    },
+    {
+      "id": 28,
+      "title": "File Descriptor",
+      "type": "timeseries"
+    },
+    {
+      "id": 219,
+      "title": "File Nodes Size",
+      "type": "timeseries"
+    },
+    {
+      "id": 44,
+      "title": "Filesystem in ReadOnly / Error",
+      "type": "timeseries"
+    },
+    {
+      "id": 60,
+      "title": "Network Traffic by Packets",
+      "type": "timeseries"
+    },
+    {
+      "id": 142,
+      "title": "Network Traffic Errors",
+      "type": "timeseries"
+    },
+    {
+      "id": 143,
+      "title": "Network Traffic Drop",
+      "type": "timeseries"
+    },
+    {
+      "id": 141,
+      "title": "Network Traffic Compressed",
+      "type": "timeseries"
+    },
+    {
+      "id": 146,
+      "title": "Network Traffic Multicast",
+      "type": "timeseries"
+    },
+    {
+      "id": 144,
+      "title": "Network Traffic Fifo",
+      "type": "timeseries"
+    },
+    {
+      "id": 145,
+      "title": "Network Traffic Frame",
+      "type": "timeseries"
+    },
+    {
+      "id": 231,
+      "title": "Network Traffic Carrier",
+      "type": "timeseries"
+    },
+    {
+      "id": 232,
+      "title": "Network Traffic Colls",
+      "type": "timeseries"
+    },
+    {
+      "id": 61,
+      "title": "NF Conntrack",
+      "type": "timeseries"
+    },
+    {
+      "id": 230,
+      "title": "ARP Entries",
+      "type": "timeseries"
+    },
+    {
+      "id": 288,
+      "title": "MTU",
+      "type": "timeseries"
+    },
+    {
+      "id": 280,
+      "title": "Speed",
+      "type": "timeseries"
+    },
+    {
+      "id": 289,
+      "title": "Queue Length",
+      "type": "timeseries"
+    },
+    {
+      "id": 290,
+      "title": "Softnet Packets",
+      "type": "timeseries"
+    },
+    {
+      "id": 310,
+      "title": "Softnet Out of Quota",
+      "type": "timeseries"
+    },
+    {
+      "id": 309,
+      "title": "Network Operational Status",
+      "type": "timeseries"
+    },
+    {
+      "id": 63,
+      "title": "Sockstat TCP",
+      "type": "timeseries"
+    },
+    {
+      "id": 124,
+      "title": "Sockstat UDP",
+      "type": "timeseries"
+    },
+    {
+      "id": 125,
+      "title": "Sockstat FRAG / RAW",
+      "type": "timeseries"
+    },
+    {
+      "id": 220,
+      "title": "Sockstat Memory Size",
+      "type": "timeseries"
+    },
+    {
+      "id": 126,
+      "title": "Sockstat Used",
+      "type": "timeseries"
+    },
+    {
+      "id": 221,
+      "title": "Netstat IP In / Out Octets",
+      "type": "timeseries"
+    },
+    {
+      "id": 81,
+      "title": "Netstat IP Forwarding",
+      "type": "timeseries"
+    },
+    {
+      "id": 115,
+      "title": "ICMP In / Out",
+      "type": "timeseries"
+    },
+    {
+      "id": 50,
+      "title": "ICMP Errors",
+      "type": "timeseries"
+    },
+    {
+      "id": 55,
+      "title": "UDP In / Out",
+      "type": "timeseries"
+    },
+    {
+      "id": 109,
+      "title": "UDP Errors",
+      "type": "timeseries"
+    },
+    {
+      "id": 299,
+      "title": "TCP In / Out",
+      "type": "timeseries"
+    },
+    {
+      "id": 104,
+      "title": "TCP Errors",
+      "type": "timeseries"
+    },
+    {
+      "id": 85,
+      "title": "TCP Connections",
+      "type": "timeseries"
+    },
+    {
+      "id": 91,
+      "title": "TCP SynCookie",
+      "type": "timeseries"
+    },
+    {
+      "id": 82,
+      "title": "TCP Direct Transition",
+      "type": "timeseries"
+    },
+    {
+      "id": 40,
+      "title": "Node Exporter Scrape Time",
+      "type": "timeseries"
+    },
+    {
+      "id": 157,
+      "title": "Node Exporter Scrape",
+      "type": "timeseries"
+    }
+  ],
+  "detailed_panels": [
+    {
+      "id": 323,
+      "title": "Pressure",
+      "type": "bargauge",
+      "has_description": true,
+      "description": "Resource pressure via PSI",
+      "datasource_type": "prometheus",
+      "query_count": 3,
+      "queries": [
+        "irate(node_pressure_cpu_waiting_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_pressure_memory_waiting_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_pressure_io_waiting_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 3
+    },
+    {
+      "id": 20,
+      "title": "CPU Busy",
+      "type": "gauge",
+      "has_description": true,
+      "description": "Busy state of all CPU cores together",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "100 * (1 - avg(rate(node_cpu_seconds_total{mode=\"idle\", instance=\"$node\"}[$__rate_interval])))"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 3
+    },
+    {
+      "id": 155,
+      "title": "Sys Load",
+      "type": "gauge",
+      "has_description": true,
+      "description": "System load  over all CPU cores together",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "scalar(node_load1{instance=\"$node\",job=\"$job\"}) * 100 / count(count(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}) by (cpu))"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 3
+    },
+    {
+      "id": 16,
+      "title": "RAM Used",
+      "type": "gauge",
+      "has_description": true,
+      "description": "Non available RAM memory",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "((node_memory_MemTotal_bytes{instance=\"$node\", job=\"$job\"} - node_memory_MemFree_bytes{instance=\"$node\", job=\"$job\"}) / node_memory_MemTotal_bytes{instance=\"$node\", job=\"$job\"}) * 100",
+        "(1 - (node_memory_MemAvailable_bytes{instance=\"$node\", job=\"$job\"} / node_memory_MemTotal_bytes{instance=\"$node\", job=\"$job\"})) * 100"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 3
+    },
+    {
+      "id": 21,
+      "title": "SWAP Used",
+      "type": "gauge",
+      "has_description": true,
+      "description": "Used Swap",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "((node_memory_SwapTotal_bytes{instance=\"$node\",job=\"$job\"} - node_memory_SwapFree_bytes{instance=\"$node\",job=\"$job\"}) / (node_memory_SwapTotal_bytes{instance=\"$node\",job=\"$job\"})) * 100"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 3
+    },
+    {
+      "id": 154,
+      "title": "Root FS Used",
+      "type": "gauge",
+      "has_description": true,
+      "description": "Used Root FS",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "100 - ((node_filesystem_avail_bytes{instance=\"$node\",job=\"$job\",mountpoint=\"/\",fstype!=\"rootfs\"} * 100) / node_filesystem_size_bytes{instance=\"$node\",job=\"$job\",mountpoint=\"/\",fstype!=\"rootfs\"})"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 3
+    },
+    {
+      "id": 14,
+      "title": "CPU Cores",
+      "type": "stat",
+      "has_description": true,
+      "description": "Total number of CPU cores",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "count(count(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}) by (cpu))"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 15,
+      "title": "Uptime",
+      "type": "stat",
+      "has_description": true,
+      "description": "System uptime",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_time_seconds{instance=\"$node\",job=\"$job\"} - node_boot_time_seconds{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 23,
+      "title": "RootFS Total",
+      "type": "stat",
+      "has_description": true,
+      "description": "Total RootFS",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_filesystem_size_bytes{instance=\"$node\",job=\"$job\",mountpoint=\"/\",fstype!=\"rootfs\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 3
+    },
+    {
+      "id": 75,
+      "title": "RAM Total",
+      "type": "stat",
+      "has_description": true,
+      "description": "Total RAM",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_memory_MemTotal_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 18,
+      "title": "SWAP Total",
+      "type": "stat",
+      "has_description": true,
+      "description": "Total SWAP",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_memory_SwapTotal_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 77,
+      "title": "CPU Basic",
+      "type": "timeseries",
+      "has_description": true,
+      "description": "Basic CPU info",
+      "datasource_type": "prometheus",
+      "query_count": 6,
+      "queries": [
+        "sum(irate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\", mode=\"system\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}) by (cpu)))",
+        "sum(irate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\", mode=\"user\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}) by (cpu)))",
+        "sum(irate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\", mode=\"iowait\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}) by (cpu)))",
+        "sum(irate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\", mode=~\".*irq\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}) by (cpu)))",
+        "sum(irate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\",  mode!='idle',mode!='user',mode!='system',mode!='iowait',mode!='irq',mode!='softirq'}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}) by (cpu)))",
+        "sum(irate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\", mode=\"idle\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}) by (cpu)))"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 78,
+      "title": "Memory Basic",
+      "type": "timeseries",
+      "has_description": true,
+      "description": "Basic memory usage",
+      "datasource_type": "prometheus",
+      "query_count": 5,
+      "queries": [
+        "node_memory_MemTotal_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_MemTotal_bytes{instance=\"$node\",job=\"$job\"} - node_memory_MemFree_bytes{instance=\"$node\",job=\"$job\"} - (node_memory_Cached_bytes{instance=\"$node\",job=\"$job\"} + node_memory_Buffers_bytes{instance=\"$node\",job=\"$job\"} + node_memory_SReclaimable_bytes{instance=\"$node\",job=\"$job\"})",
+        "node_memory_Cached_bytes{instance=\"$node\",job=\"$job\"} + node_memory_Buffers_bytes{instance=\"$node\",job=\"$job\"} + node_memory_SReclaimable_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_MemFree_bytes{instance=\"$node\",job=\"$job\"}",
+        "(node_memory_SwapTotal_bytes{instance=\"$node\",job=\"$job\"} - node_memory_SwapFree_bytes{instance=\"$node\",job=\"$job\"})"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 74,
+      "title": "Network Traffic Basic",
+      "type": "timeseries",
+      "has_description": true,
+      "description": "Basic network info per interface",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_network_receive_bytes_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])*8",
+        "irate(node_network_transmit_bytes_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])*8"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 152,
+      "title": "Disk Space Used Basic",
+      "type": "timeseries",
+      "has_description": true,
+      "description": "Disk space used of all filesystems mounted",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "100 - ((node_filesystem_avail_bytes{instance=\"$node\",job=\"$job\",device!~'rootfs'} * 100) / node_filesystem_size_bytes{instance=\"$node\",job=\"$job\",device!~'rootfs'})"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 3,
+      "title": "CPU",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 8,
+      "queries": [
+        "sum(irate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\", mode=\"system\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}) by (cpu)))",
+        "sum(irate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\", mode=\"user\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}) by (cpu)))",
+        "sum(irate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\", mode=\"nice\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}) by (cpu)))",
+        "sum by(instance) (irate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\", mode=\"iowait\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}) by (cpu)))",
+        "sum(irate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\", mode=\"irq\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}) by (cpu)))",
+        "sum(irate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\", mode=\"softirq\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}) by (cpu)))",
+        "sum(irate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\", mode=\"steal\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}) by (cpu)))",
+        "sum(irate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\", mode=\"idle\"}[$__rate_interval])) / scalar(count(count(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}) by (cpu)))"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 24,
+      "title": "Memory Stack",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 9,
+      "queries": [
+        "node_memory_MemTotal_bytes{instance=\"$node\",job=\"$job\"} - node_memory_MemFree_bytes{instance=\"$node\",job=\"$job\"} - node_memory_Buffers_bytes{instance=\"$node\",job=\"$job\"} - node_memory_Cached_bytes{instance=\"$node\",job=\"$job\"} - node_memory_Slab_bytes{instance=\"$node\",job=\"$job\"} - node_memory_PageTables_bytes{instance=\"$node\",job=\"$job\"} - node_memory_SwapCached_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_PageTables_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_SwapCached_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_Slab_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_Cached_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_Buffers_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_MemFree_bytes{instance=\"$node\",job=\"$job\"}",
+        "(node_memory_SwapTotal_bytes{instance=\"$node\",job=\"$job\"} - node_memory_SwapFree_bytes{instance=\"$node\",job=\"$job\"})",
+        "node_memory_HardwareCorrupted_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 84,
+      "title": "Network Traffic",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_network_receive_bytes_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])*8",
+        "irate(node_network_transmit_bytes_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])*8"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 156,
+      "title": "Disk Space Used",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_filesystem_size_bytes{instance=\"$node\",job=\"$job\",device!~'rootfs'} - node_filesystem_avail_bytes{instance=\"$node\",job=\"$job\",device!~'rootfs'}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 229,
+      "title": "Disk IOps",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_disk_reads_completed_total{instance=\"$node\",job=\"$job\",device=~\"$diskdevices\"}[$__rate_interval])",
+        "irate(node_disk_writes_completed_total{instance=\"$node\",job=\"$job\",device=~\"$diskdevices\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 42,
+      "title": "I/O Usage Read / Write",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_disk_read_bytes_total{instance=\"$node\",job=\"$job\",device=~\"$diskdevices\"}[$__rate_interval])",
+        "irate(node_disk_written_bytes_total{instance=\"$node\",job=\"$job\",device=~\"$diskdevices\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 127,
+      "title": "I/O Utilization",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "irate(node_disk_io_time_seconds_total{instance=\"$node\",job=\"$job\",device=~\"$diskdevices\"} [$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 319,
+      "title": "CPU spent seconds in guests (VMs)",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "sum by(instance) (irate(node_cpu_guest_seconds_total{instance=\"$node\",job=\"$job\", mode=\"user\"}[1m])) / on(instance) group_left sum by (instance)((irate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}[1m])))",
+        "sum by(instance) (irate(node_cpu_guest_seconds_total{instance=\"$node\",job=\"$job\", mode=\"nice\"}[1m])) / on(instance) group_left sum by (instance)((irate(node_cpu_seconds_total{instance=\"$node\",job=\"$job\"}[1m])))"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 136,
+      "title": "Memory Active / Inactive",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_memory_Inactive_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_Active_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 135,
+      "title": "Memory Committed",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_memory_Committed_AS_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_CommitLimit_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 191,
+      "title": "Memory Active / Inactive Detail",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 4,
+      "queries": [
+        "node_memory_Inactive_file_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_Inactive_anon_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_Active_file_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_Active_anon_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 130,
+      "title": "Memory Writeback and Dirty",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 3,
+      "queries": [
+        "node_memory_Writeback_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_WritebackTmp_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_Dirty_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 138,
+      "title": "Memory Shared and Mapped",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 4,
+      "queries": [
+        "node_memory_Mapped_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_Shmem_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_ShmemHugePages_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_ShmemPmdMapped_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 131,
+      "title": "Memory Slab",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_memory_SUnreclaim_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_SReclaimable_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 70,
+      "title": "Memory Vmalloc",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 3,
+      "queries": [
+        "node_memory_VmallocChunk_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_VmallocTotal_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_VmallocUsed_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 159,
+      "title": "Memory Bounce",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_memory_Bounce_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 129,
+      "title": "Memory Anonymous",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_memory_AnonHugePages_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_AnonPages_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 160,
+      "title": "Memory Kernel / CPU",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_memory_KernelStack_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_Percpu_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 140,
+      "title": "Memory HugePages Counter",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 3,
+      "queries": [
+        "node_memory_HugePages_Free{instance=\"$node\",job=\"$job\"}",
+        "node_memory_HugePages_Rsvd{instance=\"$node\",job=\"$job\"}",
+        "node_memory_HugePages_Surp{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 71,
+      "title": "Memory HugePages Size",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_memory_HugePages_Total{instance=\"$node\",job=\"$job\"}",
+        "node_memory_Hugepagesize_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 128,
+      "title": "Memory DirectMap",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 3,
+      "queries": [
+        "node_memory_DirectMap1G_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_DirectMap2M_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_DirectMap4k_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 137,
+      "title": "Memory Unevictable and MLocked",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_memory_Unevictable_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_memory_Mlocked_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 132,
+      "title": "Memory NFS",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_memory_NFS_Unstable_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 176,
+      "title": "Memory Pages In / Out",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_vmstat_pgpgin{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_vmstat_pgpgout{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 22,
+      "title": "Memory Pages Swap In / Out",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_vmstat_pswpin{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_vmstat_pswpout{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 175,
+      "title": "Memory Page Faults",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 3,
+      "queries": [
+        "irate(node_vmstat_pgfault{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_vmstat_pgmajfault{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_vmstat_pgfault{instance=\"$node\",job=\"$job\"}[$__rate_interval])  - irate(node_vmstat_pgmajfault{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 307,
+      "title": "OOM Killer",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "irate(node_vmstat_oom_kill{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 260,
+      "title": "Time Synchronized Drift",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 3,
+      "queries": [
+        "node_timex_estimated_error_seconds{instance=\"$node\",job=\"$job\"}",
+        "node_timex_offset_seconds{instance=\"$node\",job=\"$job\"}",
+        "node_timex_maxerror_seconds{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 291,
+      "title": "Time PLL Adjust",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_timex_loop_time_constant{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 168,
+      "title": "Time Synchronized Status",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_timex_sync_status{instance=\"$node\",job=\"$job\"}",
+        "node_timex_frequency_adjustment_ratio{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 294,
+      "title": "Time Misc",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_timex_tick_seconds{instance=\"$node\",job=\"$job\"}",
+        "node_timex_tai_offset_seconds{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 62,
+      "title": "Processes Status",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_procs_blocked{instance=\"$node\",job=\"$job\"}",
+        "node_procs_running{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 315,
+      "title": "Processes State",
+      "type": "timeseries",
+      "has_description": true,
+      "description": "Enable with --collector.processes argument on node-exporter",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_processes_state{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 148,
+      "title": "Processes  Forks",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "irate(node_forks_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 149,
+      "title": "Processes Memory",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 4,
+      "queries": [
+        "irate(process_virtual_memory_bytes{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "process_resident_memory_max_bytes{instance=\"$node\",job=\"$job\"}",
+        "irate(process_virtual_memory_bytes{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(process_virtual_memory_max_bytes{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 313,
+      "title": "PIDs Number and Limit",
+      "type": "timeseries",
+      "has_description": true,
+      "description": "Enable with --collector.processes argument on node-exporter",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_processes_pids{instance=\"$node\",job=\"$job\"}",
+        "node_processes_max_processes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 305,
+      "title": "Process schedule stats Running / Waiting",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_schedstat_running_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_schedstat_waiting_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 314,
+      "title": "Threads Number and Limit",
+      "type": "timeseries",
+      "has_description": true,
+      "description": "Enable with --collector.processes argument on node-exporter",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_processes_threads{instance=\"$node\",job=\"$job\"}",
+        "node_processes_max_threads{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 8,
+      "title": "Context Switches / Interrupts",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_context_switches_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_intr_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 7,
+      "title": "System Load",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 3,
+      "queries": [
+        "node_load1{instance=\"$node\",job=\"$job\"}",
+        "node_load5{instance=\"$node\",job=\"$job\"}",
+        "node_load15{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 321,
+      "title": "CPU Frequency Scaling",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 3,
+      "queries": [
+        "node_cpu_scaling_frequency_hertz{instance=\"$node\",job=\"$job\"}",
+        "avg(node_cpu_scaling_frequency_max_hertz{instance=\"$node\",job=\"$job\"})",
+        "avg(node_cpu_scaling_frequency_min_hertz{instance=\"$node\",job=\"$job\"})"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 322,
+      "title": "Pressure Stall Information",
+      "type": "timeseries",
+      "has_description": true,
+      "description": "https://docs.kernel.org/accounting/psi.html",
+      "datasource_type": "prometheus",
+      "query_count": 5,
+      "queries": [
+        "rate(node_pressure_cpu_waiting_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "rate(node_pressure_memory_waiting_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "rate(node_pressure_memory_stalled_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "rate(node_pressure_io_waiting_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "rate(node_pressure_io_stalled_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 259,
+      "title": "Interrupts Detail",
+      "type": "timeseries",
+      "has_description": true,
+      "description": "Enable with --collector.interrupts argument on node-exporter",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "irate(node_interrupts_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 306,
+      "title": "Schedule timeslices executed by each cpu",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "irate(node_schedstat_timeslices_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 151,
+      "title": "Entropy",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_entropy_available_bits{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 308,
+      "title": "CPU time spent in user and system contexts",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "irate(process_cpu_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 64,
+      "title": "File Descriptors",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "process_max_fds{instance=\"$node\",job=\"$job\"}",
+        "process_open_fds{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 158,
+      "title": "Hardware temperature monitor",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 5,
+      "queries": [
+        "node_hwmon_temp_celsius{instance=\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"$node\",job=\"$job\"}",
+        "node_hwmon_temp_crit_alarm_celsius{instance=\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"$node\",job=\"$job\"}",
+        "node_hwmon_temp_crit_celsius{instance=\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"$node\",job=\"$job\"}",
+        "node_hwmon_temp_crit_hyst_celsius{instance=\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"$node\",job=\"$job\"}",
+        "node_hwmon_temp_max_celsius{instance=\"$node\",job=\"$job\"} * on(chip) group_left(chip_name) node_hwmon_chip_names{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 300,
+      "title": "Throttle cooling device",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_cooling_device_cur_state{instance=\"$node\",job=\"$job\"}",
+        "node_cooling_device_max_state{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 302,
+      "title": "Power supply",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_power_supply_online{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 297,
+      "title": "Systemd Sockets",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "irate(node_systemd_socket_accepted_connections_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 298,
+      "title": "Systemd Units State",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 5,
+      "queries": [
+        "node_systemd_units{instance=\"$node\",job=\"$job\",state=\"activating\"}",
+        "node_systemd_units{instance=\"$node\",job=\"$job\",state=\"active\"}",
+        "node_systemd_units{instance=\"$node\",job=\"$job\",state=\"deactivating\"}",
+        "node_systemd_units{instance=\"$node\",job=\"$job\",state=\"failed\"}",
+        "node_systemd_units{instance=\"$node\",job=\"$job\",state=\"inactive\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 9,
+      "title": "Disk IOps Completed",
+      "type": "timeseries",
+      "has_description": true,
+      "description": "The number (after merges) of I/O requests completed per second for the device",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_disk_reads_completed_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_disk_writes_completed_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 33,
+      "title": "Disk R/W Data",
+      "type": "timeseries",
+      "has_description": true,
+      "description": "The number of bytes read from or written to the device per second",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_disk_read_bytes_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_disk_written_bytes_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 37,
+      "title": "Disk Average Wait Time",
+      "type": "timeseries",
+      "has_description": true,
+      "description": "The average time for requests issued to the device to be served. This includes the time spent by the requests in queue and the time spent servicing them.",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_disk_read_time_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval]) / irate(node_disk_reads_completed_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_disk_write_time_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval]) / irate(node_disk_writes_completed_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 35,
+      "title": "Average Queue Size",
+      "type": "timeseries",
+      "has_description": true,
+      "description": "The average queue length of the requests that were issued to the device",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "irate(node_disk_io_time_weighted_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 133,
+      "title": "Disk R/W Merged",
+      "type": "timeseries",
+      "has_description": true,
+      "description": "The number of read and write requests merged per second that were queued to the device",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_disk_reads_merged_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_disk_writes_merged_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 36,
+      "title": "Time Spent Doing I/Os",
+      "type": "timeseries",
+      "has_description": true,
+      "description": "Percentage of elapsed time during which I/O requests were issued to the device (bandwidth utilization for the device). Device saturation occurs when this value is close to 100% for devices serving requests serially.  But for devices  serving requests in parallel, such as RAID arrays and modern SSDs, this number does not reflect their performance limits.",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_disk_io_time_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_disk_discard_time_seconds_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 34,
+      "title": "Instantaneous Queue Size",
+      "type": "timeseries",
+      "has_description": true,
+      "description": "The number of outstanding requests at the instant the sample was taken. Incremented as requests are given to appropriate struct request_queue and decremented as they finish.",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_disk_io_now{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 301,
+      "title": "Disk IOps Discards completed / merged",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_disk_discards_completed_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_disk_discards_merged_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 43,
+      "title": "Filesystem space available",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 3,
+      "queries": [
+        "node_filesystem_avail_bytes{instance=\"$node\",job=\"$job\",device!~'rootfs'}",
+        "node_filesystem_free_bytes{instance=\"$node\",job=\"$job\",device!~'rootfs'}",
+        "node_filesystem_size_bytes{instance=\"$node\",job=\"$job\",device!~'rootfs'}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 41,
+      "title": "File Nodes Free",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_filesystem_files_free{instance=\"$node\",job=\"$job\",device!~'rootfs'}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 28,
+      "title": "File Descriptor",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_filefd_maximum{instance=\"$node\",job=\"$job\"}",
+        "node_filefd_allocated{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 219,
+      "title": "File Nodes Size",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_filesystem_files{instance=\"$node\",job=\"$job\",device!~'rootfs'}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 44,
+      "title": "Filesystem in ReadOnly / Error",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_filesystem_readonly{instance=\"$node\",job=\"$job\",device!~'rootfs'}",
+        "node_filesystem_device_error{instance=\"$node\",job=\"$job\",device!~'rootfs',fstype!~'tmpfs'}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 60,
+      "title": "Network Traffic by Packets",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_network_receive_packets_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_network_transmit_packets_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 142,
+      "title": "Network Traffic Errors",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_network_receive_errs_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_network_transmit_errs_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 143,
+      "title": "Network Traffic Drop",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_network_receive_drop_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_network_transmit_drop_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 141,
+      "title": "Network Traffic Compressed",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_network_receive_compressed_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_network_transmit_compressed_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 146,
+      "title": "Network Traffic Multicast",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "irate(node_network_receive_multicast_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 144,
+      "title": "Network Traffic Fifo",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_network_receive_fifo_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_network_transmit_fifo_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 145,
+      "title": "Network Traffic Frame",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "irate(node_network_receive_frame_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 231,
+      "title": "Network Traffic Carrier",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "irate(node_network_transmit_carrier_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 232,
+      "title": "Network Traffic Colls",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "irate(node_network_transmit_colls_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 61,
+      "title": "NF Conntrack",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_nf_conntrack_entries{instance=\"$node\",job=\"$job\"}",
+        "node_nf_conntrack_entries_limit{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 230,
+      "title": "ARP Entries",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_arp_entries{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 288,
+      "title": "MTU",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_network_mtu_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 280,
+      "title": "Speed",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_network_speed_bytes{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 289,
+      "title": "Queue Length",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_network_transmit_queue_length{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 290,
+      "title": "Softnet Packets",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_softnet_processed_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_softnet_dropped_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 310,
+      "title": "Softnet Out of Quota",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "irate(node_softnet_times_squeezed_total{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 309,
+      "title": "Network Operational Status",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_network_up{operstate=\"up\",instance=\"$node\",job=\"$job\"}",
+        "node_network_carrier{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 63,
+      "title": "Sockstat TCP",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 5,
+      "queries": [
+        "node_sockstat_TCP_alloc{instance=\"$node\",job=\"$job\"}",
+        "node_sockstat_TCP_inuse{instance=\"$node\",job=\"$job\"}",
+        "node_sockstat_TCP_mem{instance=\"$node\",job=\"$job\"}",
+        "node_sockstat_TCP_orphan{instance=\"$node\",job=\"$job\"}",
+        "node_sockstat_TCP_tw{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 124,
+      "title": "Sockstat UDP",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 3,
+      "queries": [
+        "node_sockstat_UDPLITE_inuse{instance=\"$node\",job=\"$job\"}",
+        "node_sockstat_UDP_inuse{instance=\"$node\",job=\"$job\"}",
+        "node_sockstat_UDP_mem{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 125,
+      "title": "Sockstat FRAG / RAW",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_sockstat_FRAG_inuse{instance=\"$node\",job=\"$job\"}",
+        "node_sockstat_RAW_inuse{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 220,
+      "title": "Sockstat Memory Size",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 3,
+      "queries": [
+        "node_sockstat_TCP_mem_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_sockstat_UDP_mem_bytes{instance=\"$node\",job=\"$job\"}",
+        "node_sockstat_FRAG_memory{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 126,
+      "title": "Sockstat Used",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_sockstat_sockets_used{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 221,
+      "title": "Netstat IP In / Out Octets",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_netstat_IpExt_InOctets{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_netstat_IpExt_OutOctets{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 81,
+      "title": "Netstat IP Forwarding",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "irate(node_netstat_Ip_Forwarding{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 115,
+      "title": "ICMP In / Out",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_netstat_Icmp_InMsgs{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_netstat_Icmp_OutMsgs{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 50,
+      "title": "ICMP Errors",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "irate(node_netstat_Icmp_InErrors{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 55,
+      "title": "UDP In / Out",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_netstat_Udp_InDatagrams{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_netstat_Udp_OutDatagrams{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 109,
+      "title": "UDP Errors",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 5,
+      "queries": [
+        "irate(node_netstat_Udp_InErrors{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_netstat_Udp_NoPorts{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_netstat_UdpLite_InErrors{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_netstat_Udp_RcvbufErrors{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_netstat_Udp_SndbufErrors{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 299,
+      "title": "TCP In / Out",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_netstat_Tcp_InSegs{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_netstat_Tcp_OutSegs{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 104,
+      "title": "TCP Errors",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 8,
+      "queries": [
+        "irate(node_netstat_TcpExt_ListenOverflows{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_netstat_TcpExt_ListenDrops{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_netstat_TcpExt_TCPSynRetrans{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_netstat_Tcp_RetransSegs{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_netstat_Tcp_InErrs{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_netstat_Tcp_OutRsts{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_netstat_TcpExt_TCPRcvQDrop{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_netstat_TcpExt_TCPOFOQueue{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 85,
+      "title": "TCP Connections",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_netstat_Tcp_CurrEstab{instance=\"$node\",job=\"$job\"}",
+        "node_netstat_Tcp_MaxConn{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 91,
+      "title": "TCP SynCookie",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 3,
+      "queries": [
+        "irate(node_netstat_TcpExt_SyncookiesFailed{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_netstat_TcpExt_SyncookiesRecv{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_netstat_TcpExt_SyncookiesSent{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 82,
+      "title": "TCP Direct Transition",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "irate(node_netstat_Tcp_ActiveOpens{instance=\"$node\",job=\"$job\"}[$__rate_interval])",
+        "irate(node_netstat_Tcp_PassiveOpens{instance=\"$node\",job=\"$job\"}[$__rate_interval])"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 320,
+      "title": "TCP Stat",
+      "type": "timeseries",
+      "has_description": true,
+      "description": "Enable with --collector.tcpstat argument on node-exporter",
+      "datasource_type": "prometheus",
+      "query_count": 4,
+      "queries": [
+        "node_tcp_connection_states{state=\"established\",instance=\"$node\",job=\"$job\"}",
+        "node_tcp_connection_states{state=\"fin_wait2\",instance=\"$node\",job=\"$job\"}",
+        "node_tcp_connection_states{state=\"listen\",instance=\"$node\",job=\"$job\"}",
+        "node_tcp_connection_states{state=\"time_wait\",instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 1
+    },
+    {
+      "id": 40,
+      "title": "Node Exporter Scrape Time",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 1,
+      "queries": [
+        "node_scrape_collector_duration_seconds{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    },
+    {
+      "id": 157,
+      "title": "Node Exporter Scrape",
+      "type": "timeseries",
+      "has_description": false,
+      "description": "",
+      "datasource_type": "prometheus",
+      "query_count": 2,
+      "queries": [
+        "node_scrape_collector_success{instance=\"$node\",job=\"$job\"}",
+        "node_textfile_scrape_error{instance=\"$node\",job=\"$job\"}"
+      ],
+      "has_thresholds": true,
+      "threshold_count": 2
+    }
+  ]
+}
