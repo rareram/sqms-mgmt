@@ -8,6 +8,7 @@ import time
 import urllib.parse
 import base64
 import urllib3
+import ipaddress
 from modules.utils.version import show_version_info, save_repo_url, load_repo_url
 
 # SSL 경고 억제 (개발용)
@@ -416,10 +417,24 @@ def check_grafana_connection():
         
         return True
     except requests.exceptions.ConnectionError as e:
-        if "Name or service not known" in str(e) or "NameResolutionError" in str(e):
+        # URL에서 호스트 추출
+        parsed_url = urllib.parse.urlparse(grafana_url)
+        host = parsed_url.hostname
+        
+        # IP 주소인지 확인
+        is_ip = False
+        try:
+            ipaddress.ip_address(host)
+            is_ip = True
+        except ValueError:
+            is_ip = False
+        
+        if not is_ip and ("Name or service not known" in str(e) or "NameResolutionError" in str(e)):
             st.error(f"Grafana 연결 실패: DNS 해결 오류 - {grafana_url} 도메인을 찾을 수 없습니다.")
         else:
             st.error(f"Grafana 연결 실패: 네트워크 연결 오류 - {e}")
+    except requests.exceptions.SSLError as e:
+        st.error(f"Grafana 연결 실패: SSL 인증서 오류 - {e}. SSL_VERIFY=false를 시도해보세요.")
         return False
     except requests.exceptions.Timeout:
         st.error("Grafana 연결 실패: 연결 시간 초과")
