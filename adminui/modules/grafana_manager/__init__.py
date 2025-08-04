@@ -26,13 +26,21 @@ def create_grafana_session():
     if not all([grafana_url, grafana_token]):
         return None, None
     
-    headers = {"Authorization": f"Bearer {grafana_token}"}
+    headers = {
+        "Authorization": f"Bearer {grafana_token}",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
     
     # Session 객체 생성 및 설정 (desc_editor와 동일한 방식)
     session = requests.Session()
     session.headers.update(headers)
     session.verify = get_ssl_verify()
     session.timeout = 30
+    
+    # SSL 검증이 비활성화된 경우 경고 출력
+    if not get_ssl_verify():
+        print("⚠️  WARNING: SSL 검증이 비활성화되었습니다. 개발용으로만 사용하세요!")
     
     return session, grafana_url
 
@@ -527,18 +535,14 @@ def update_team_info(team_id, team_info):
 def get_all_folders():
     """Grafana 폴더 목록 조회"""
     try:
-        grafana_url = os.environ.get("GRAFANA_URL")
-        grafana_token = os.environ.get("GRAFANA_API_TOKEN")
-        
-        if not all([grafana_url, grafana_token]):
+        session, grafana_url = create_grafana_session()
+        if not session:
             return []
-        
-        headers = {"Authorization": f"Bearer {grafana_token}"}
         
         # 폴더 API 호출
         url = f"{grafana_url}/api/folders"
         
-        response = requests.get(url, headers=headers, verify=get_ssl_verify())
+        response = session.get(url)
         response.raise_for_status()
         
         folders = response.json()
@@ -575,13 +579,9 @@ def get_all_folders():
 def get_nested_folders(parent_uid=None):
     """중첩된 폴더 목록 조회"""
     try:
-        grafana_url = os.environ.get("GRAFANA_URL")
-        grafana_token = os.environ.get("GRAFANA_API_TOKEN")
-        
-        if not all([grafana_url, grafana_token]):
+        session, grafana_url = create_grafana_session()
+        if not session:
             return []
-        
-        headers = {"Authorization": f"Bearer {grafana_token}"}
         
         # URL 구성
         url = f"{grafana_url}/api/folders"
@@ -589,7 +589,7 @@ def get_nested_folders(parent_uid=None):
         if parent_uid:
             params['parentUid'] = parent_uid
         
-        response = requests.get(url, headers=headers, params=params, verify=get_ssl_verify())
+        response = session.get(url, params=params)
         response.raise_for_status()
         
         folders = response.json()
@@ -620,16 +620,13 @@ def get_nested_folders(parent_uid=None):
 def get_folder_permissions(folder_uid):
     """폴더 권한 조회"""
     try:
-        grafana_url = os.environ.get("GRAFANA_URL")
-        grafana_token = os.environ.get("GRAFANA_API_TOKEN")
-        
-        if not all([grafana_url, grafana_token]):
+        session, grafana_url = create_grafana_session()
+        if not session:
             return []
         
-        headers = {"Authorization": f"Bearer {grafana_token}"}
         url = f"{grafana_url}/api/folders/{folder_uid}/permissions"
         
-        response = requests.get(url, headers=headers, verify=get_ssl_verify())
+        response = session.get(url)
         response.raise_for_status()
         
         return response.json()
@@ -762,17 +759,21 @@ def show_version_tab():
 def get_grafana_version():
     """Grafana 서버의 버전 정보를 가져옵니다."""
     try:
-        grafana_url = os.environ.get("GRAFANA_URL")
-        grafana_token = os.environ.get("GRAFANA_API_TOKEN")
-        
-        if not all([grafana_url, grafana_token]):
+        session, grafana_url = create_grafana_session()
+        if not session:
             return None
         
-        headers = {"Authorization": f"Bearer {grafana_token}"}
         url = f"{grafana_url}/api/health"
         
-        response = requests.get(url, headers=headers, timeout=5, verify=get_ssl_verify())
+        # 개별 타임아웃 설정 (Session의 기본 타임아웃을 5초로 변경)
+        original_timeout = session.timeout
+        session.timeout = 5
+        
+        response = session.get(url)
         response.raise_for_status()
+        
+        # 원래 타임아웃으로 복원
+        session.timeout = original_timeout
         
         health_info = response.json()
         return {
@@ -892,18 +893,14 @@ def show_desc_editor():
 def load_dashboard_folders():
     """대시보드 폴더 목록 조회"""
     try:
-        grafana_url = os.environ.get("GRAFANA_URL")
-        grafana_token = os.environ.get("GRAFANA_API_TOKEN")
-        
-        if not all([grafana_url, grafana_token]):
+        session, grafana_url = create_grafana_session()
+        if not session:
             return []
-        
-        headers = {"Authorization": f"Bearer {grafana_token}"}
         
         # 폴더 API 호출
         url = f"{grafana_url}/api/folders"
         
-        response = requests.get(url, headers=headers, verify=get_ssl_verify())
+        response = session.get(url)
         response.raise_for_status()
         
         folders = response.json()
@@ -940,19 +937,16 @@ def load_dashboard_folders():
 def get_dashboards_in_folder(folder_id):
     """특정 폴더의 대시보드 목록 조회"""
     try:
-        grafana_url = os.environ.get("GRAFANA_URL")
-        grafana_token = os.environ.get("GRAFANA_API_TOKEN")
-        
-        if not all([grafana_url, grafana_token]):
+        session, grafana_url = create_grafana_session()
+        if not session:
             return []
         
-        headers = {"Authorization": f"Bearer {grafana_token}"}
         url = f"{grafana_url}/api/search"
         
         # 모든 대시보드 조회
         params = {'type': 'dash-db'}
         
-        response = requests.get(url, headers=headers, params=params, verify=get_ssl_verify())
+        response = session.get(url, params=params)
         response.raise_for_status()
         
         all_dashboards = response.json()
@@ -1083,16 +1077,13 @@ def show_dashboard_desc_editor(dashboard):
 def get_dashboard_details(dashboard_uid):
     """대시보드 상세 정보 조회"""
     try:
-        grafana_url = os.environ.get("GRAFANA_URL")
-        grafana_token = os.environ.get("GRAFANA_API_TOKEN")
-        
-        if not all([grafana_url, grafana_token]):
+        session, grafana_url = create_grafana_session()
+        if not session:
             return None
         
-        headers = {"Authorization": f"Bearer {grafana_token}"}
         url = f"{grafana_url}/api/dashboards/uid/{dashboard_uid}"
         
-        response = requests.get(url, headers=headers, verify=get_ssl_verify())
+        response = session.get(url)
         response.raise_for_status()
         
         return response.json()
@@ -1114,14 +1105,10 @@ def save_dashboard_descriptions(dashboard_uid, dashboard_data, edited_descriptio
                 updated_count += 1
         
         # 대시보드 저장
-        grafana_url = os.environ.get("GRAFANA_URL")
-        grafana_token = os.environ.get("GRAFANA_API_TOKEN")
-        
-        if not all([grafana_url, grafana_token]):
+        session, grafana_url = create_grafana_session()
+        if not session:
             st.error("Grafana 설정이 없습니다.")
             return
-        
-        headers = {"Authorization": f"Bearer {grafana_token}"}
         
         # 대시보드 저장을 위한 데이터 구조
         save_data = {
@@ -1132,7 +1119,7 @@ def save_dashboard_descriptions(dashboard_uid, dashboard_data, edited_descriptio
         
         url = f"{grafana_url}/api/dashboards/db"
         
-        response = requests.post(url, headers=headers, json=save_data, verify=get_ssl_verify())
+        response = session.post(url, json=save_data)
         response.raise_for_status()
         
         st.success(f"✅ {updated_count}개 패널의 Description이 성공적으로 업데이트되었습니다!")
