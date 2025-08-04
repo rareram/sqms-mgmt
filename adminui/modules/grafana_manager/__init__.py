@@ -411,10 +411,22 @@ def check_grafana_connection():
         headers = {"Authorization": f"Bearer {grafana_token}"}
         url = f"{grafana_url}/api/org"
         
-        response = requests.get(url, headers=headers, verify=get_ssl_verify())
+        response = requests.get(url, headers=headers, verify=get_ssl_verify(), timeout=10)
         response.raise_for_status()
         
         return True
+    except requests.exceptions.ConnectionError as e:
+        if "Name or service not known" in str(e) or "NameResolutionError" in str(e):
+            st.error(f"Grafana 연결 실패: DNS 해결 오류 - {grafana_url} 도메인을 찾을 수 없습니다.")
+        else:
+            st.error(f"Grafana 연결 실패: 네트워크 연결 오류 - {e}")
+        return False
+    except requests.exceptions.Timeout:
+        st.error("Grafana 연결 실패: 연결 시간 초과")
+        return False
+    except requests.exceptions.RequestException as e:
+        st.error(f"Grafana 연결 실패: {e}")
+        return False
     except Exception as e:
         st.error(f"Grafana 연결 실패: {e}")
         return False
