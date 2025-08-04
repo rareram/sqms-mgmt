@@ -18,6 +18,24 @@ def get_ssl_verify():
     """SSL 검증 설정 반환"""
     return os.environ.get("SSL_VERIFY", "true").lower() != "false"
 
+def create_grafana_session():
+    """Grafana API용 공통 세션 생성"""
+    grafana_url = os.environ.get("GRAFANA_URL")
+    grafana_token = os.environ.get("GRAFANA_API_TOKEN")
+    
+    if not all([grafana_url, grafana_token]):
+        return None, None
+    
+    headers = {"Authorization": f"Bearer {grafana_token}"}
+    
+    # Session 객체 생성 및 설정 (desc_editor와 동일한 방식)
+    session = requests.Session()
+    session.headers.update(headers)
+    session.verify = get_ssl_verify()
+    session.timeout = 30
+    
+    return session, grafana_url
+
 # 모듈 ID와 버전 정보
 MODULE_ID = "grafana_manager"
 VERSION = "v0.2.2"
@@ -403,16 +421,12 @@ def show_grafana_settings():
 def check_grafana_connection():
     """Grafana 연결 테스트"""
     try:
-        grafana_url = os.environ.get("GRAFANA_URL")
-        grafana_token = os.environ.get("GRAFANA_API_TOKEN")
-        
-        if not all([grafana_url, grafana_token]):
+        session, grafana_url = create_grafana_session()
+        if not session:
             return False
         
-        headers = {"Authorization": f"Bearer {grafana_token}"}
         url = f"{grafana_url}/api/org"
-        
-        response = requests.get(url, headers=headers, verify=get_ssl_verify(), timeout=10)
+        response = session.get(url)
         response.raise_for_status()
         
         return True
@@ -449,16 +463,12 @@ def check_grafana_connection():
 def get_all_teams():
     """Grafana 팀 목록 조회"""
     try:
-        grafana_url = os.environ.get("GRAFANA_URL")
-        grafana_token = os.environ.get("GRAFANA_API_TOKEN")
-        
-        if not all([grafana_url, grafana_token]):
+        session, grafana_url = create_grafana_session()
+        if not session:
             return []
         
-        headers = {"Authorization": f"Bearer {grafana_token}"}
         url = f"{grafana_url}/api/teams/search?perpage=1000"
-        
-        response = requests.get(url, headers=headers, verify=get_ssl_verify())
+        response = session.get(url)
         response.raise_for_status()
         
         return response.json()["teams"]
@@ -469,16 +479,12 @@ def get_all_teams():
 def get_team_details(team_id):
     """팀 상세 정보 조회"""
     try:
-        grafana_url = os.environ.get("GRAFANA_URL")
-        grafana_token = os.environ.get("GRAFANA_API_TOKEN")
-        
-        if not all([grafana_url, grafana_token]):
+        session, grafana_url = create_grafana_session()
+        if not session:
             return None
         
-        headers = {"Authorization": f"Bearer {grafana_token}"}
         url = f"{grafana_url}/api/teams/{team_id}"
-        
-        response = requests.get(url, headers=headers, verify=get_ssl_verify())
+        response = session.get(url)
         response.raise_for_status()
         
         return response.json()
@@ -489,16 +495,12 @@ def get_team_details(team_id):
 def get_team_members(team_id):
     """팀 멤버 목록 조회"""
     try:
-        grafana_url = os.environ.get("GRAFANA_URL")
-        grafana_token = os.environ.get("GRAFANA_API_TOKEN")
-        
-        if not all([grafana_url, grafana_token]):
+        session, grafana_url = create_grafana_session()
+        if not session:
             return []
         
-        headers = {"Authorization": f"Bearer {grafana_token}"}
         url = f"{grafana_url}/api/teams/{team_id}/members"
-        
-        response = requests.get(url, headers=headers, verify=get_ssl_verify())
+        response = session.get(url)
         response.raise_for_status()
         
         return response.json()
@@ -509,16 +511,12 @@ def get_team_members(team_id):
 def update_team_info(team_id, team_info):
     """팀 정보 업데이트"""
     try:
-        grafana_url = os.environ.get("GRAFANA_URL")
-        grafana_token = os.environ.get("GRAFANA_API_TOKEN")
-        
-        if not all([grafana_url, grafana_token]):
+        session, grafana_url = create_grafana_session()
+        if not session:
             return False
         
-        headers = {"Authorization": f"Bearer {grafana_token}"}
         url = f"{grafana_url}/api/teams/{team_id}"
-        
-        response = requests.put(url, headers=headers, json=team_info, verify=get_ssl_verify())
+        response = session.put(url, json=team_info)
         response.raise_for_status()
         
         return True
