@@ -1,0 +1,7 @@
+{
+    "id": "prometheus_manager",
+    "name": "Prometheus 관리",
+    "description": "Prometheus 설정 및 호스트 관리",
+    "author": "관리자",
+    "dependencies": ["requests", "pandas", "pathlib"]
+}

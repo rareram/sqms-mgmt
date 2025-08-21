@@ -17,6 +17,10 @@
         {
             "id": "grafana_manager",
             "enabled": true
+        },
+        {
+            "id": "prometheus_manager",
+            "enabled": true
         }
     ]
 }
