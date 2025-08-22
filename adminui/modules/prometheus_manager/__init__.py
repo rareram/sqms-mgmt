@@ -9,6 +9,15 @@ import re
 from collections import defaultdict, Counter
 from modules.utils.version import show_version_info, save_repo_url, load_repo_url
 
+# 시각화용 추가 imports
+try:
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import networkx as nx
+    VISUALIZATION_AVAILABLE = True
+except ImportError:
+    VISUALIZATION_AVAILABLE = False
+
 # 모듈 ID와 버전 정보
 MODULE_ID = "prometheus_manager"
 VERSION = "v0.1.0"
@@ -235,6 +244,10 @@ def show_host_dashboard():
         
         # 상세 분석
         show_detailed_analysis(filtered_hosts)
+        
+        # 그래프 시각화
+        st.write("---")
+        show_network_visualization(filtered_hosts)
     else:
         st.info("필터 조건에 맞는 호스트가 없습니다.")
 
@@ -305,6 +318,293 @@ def show_detailed_analysis(hosts_data):
         st.write("**포트 분포:**")
         port_df = pd.DataFrame(list(port_counts.items()), columns=['Port', 'Count'])
         st.bar_chart(port_df.set_index('Port'))
+
+def show_network_visualization(hosts_data):
+    """네트워크 관계 시각화"""
+    st.subheader("🕸️ 네트워크 관계 시각화")
+    
+    if not hosts_data:
+        st.info("시각화할 데이터가 없습니다.")
+        return
+    
+    if not VISUALIZATION_AVAILABLE:
+        st.warning("⚠️ 시각화에 필요한 패키지가 설치되지 않았습니다.")
+        st.info("다음 명령어로 설치하세요: `pip install matplotlib seaborn networkx`")
+        return
+    
+    # 시각화 타입 선택
+    viz_type = st.selectbox(
+        "시각화 타입", 
+        ["라벨 관계도", "서비스 그룹 매트릭스", "포트 분포", "IP 네트워크 맵"]
+    )
+    
+    if viz_type == "라벨 관계도":
+        show_label_relationship_graph(hosts_data)
+    elif viz_type == "서비스 그룹 매트릭스":
+        show_service_group_matrix(hosts_data)
+    elif viz_type == "포트 분포":
+        show_port_distribution_chart(hosts_data)
+    elif viz_type == "IP 네트워크 맵":
+        show_ip_network_map(hosts_data)
+
+def show_label_relationship_graph(hosts_data):
+    """라벨 관계 그래프 생성"""
+    st.write("### 📊 라벨 간 관계도")
+    
+    # 라벨 조합 분석
+    label_combinations = defaultdict(int)
+    service_groups = defaultdict(set)
+    group_os = defaultdict(set)
+    
+    for host in hosts_data:
+        labels = host.get('labels', {})
+        service = labels.get('service', 'unknown')
+        group = labels.get('group', 'unknown')
+        os_val = labels.get('os', 'unknown')
+        
+        # 서비스-그룹 관계
+        service_groups[service].add(group)
+        # 그룹-OS 관계
+        group_os[group].add(os_val)
+        
+        # 라벨 조합 빈도
+        combo = f"{service}|{group}|{os_val}"
+        label_combinations[combo] += 1
+    
+    # 네트워크 그래프 데이터 준비
+    import networkx as nx
+    import matplotlib.pyplot as plt
+    
+    G = nx.Graph()
+    
+    # 노드 추가 (서비스, 그룹, OS)
+    services = set()
+    groups = set()
+    os_types = set()
+    
+    for host in hosts_data:
+        labels = host.get('labels', {})
+        services.add(labels.get('service', 'unknown'))
+        groups.add(labels.get('group', 'unknown'))
+        os_types.add(labels.get('os', 'unknown'))
+    
+    # 노드 추가
+    for service in services:
+        G.add_node(f"S:{service}", type='service')
+    for group in groups:
+        G.add_node(f"G:{group}", type='group')
+    for os_val in os_types:
+        G.add_node(f"O:{os_val}", type='os')
+    
+    # 엣지 추가 (관계 기반)
+    for service, related_groups in service_groups.items():
+        for group in related_groups:
+            G.add_edge(f"S:{service}", f"G:{group}")
+    
+    for group, related_os in group_os.items():
+        for os_val in related_os:
+            G.add_edge(f"G:{group}", f"O:{os_val}")
+    
+    # 그래프 그리기
+    fig, ax = plt.subplots(figsize=(12, 8))
+    
+    # 노드 색상 설정
+    node_colors = []
+    for node in G.nodes():
+        if node.startswith('S:'):
+            node_colors.append('#FF6B6B')  # 서비스: 빨강
+        elif node.startswith('G:'):
+            node_colors.append('#4ECDC4')  # 그룹: 청록
+        else:
+            node_colors.append('#45B7D1')  # OS: 파랑
+    
+    # 레이아웃 계산
+    pos = nx.spring_layout(G, k=3, iterations=50)
+    
+    # 그래프 그리기
+    nx.draw(G, pos, 
+            node_color=node_colors,
+            node_size=1000,
+            font_size=8,
+            font_weight='bold',
+            with_labels=True,
+            edge_color='gray',
+            alpha=0.7,
+            ax=ax)
+    
+    plt.title("라벨 관계도 (빨강:서비스, 청록:그룹, 파랑:OS)", fontsize=14)
+    plt.tight_layout()
+    st.pyplot(fig)
+    
+    # 관계 통계
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("서비스 수", len(services))
+    with col2:
+        st.metric("그룹 수", len(groups))
+    with col3:
+        st.metric("OS 종류", len(os_types))
+
+def show_service_group_matrix(hosts_data):
+    """서비스-그룹 매트릭스"""
+    st.write("### 🔲 서비스-그룹 매트릭스")
+    
+    # 매트릭스 데이터 생성
+    matrix_data = defaultdict(lambda: defaultdict(int))
+    
+    for host in hosts_data:
+        labels = host.get('labels', {})
+        service = labels.get('service', 'unknown')
+        group = labels.get('group', 'unknown')
+        matrix_data[service][group] += 1
+    
+    # DataFrame으로 변환
+    services = list(matrix_data.keys())
+    all_groups = set()
+    for groups in matrix_data.values():
+        all_groups.update(groups.keys())
+    all_groups = sorted(list(all_groups))
+    
+    matrix_df = pd.DataFrame(
+        [[matrix_data[service][group] for group in all_groups] for service in services],
+        index=services,
+        columns=all_groups
+    )
+    
+    # 히트맵 생성
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.heatmap(matrix_df, annot=True, fmt='d', cmap='YlOrRd', ax=ax)
+    plt.title("서비스-그룹별 호스트 수")
+    plt.xlabel("그룹")
+    plt.ylabel("서비스")
+    plt.tight_layout()
+    st.pyplot(fig)
+    
+    # 매트릭스 데이터프레임도 표시
+    with st.expander("📊 상세 데이터", expanded=False):
+        st.dataframe(matrix_df)
+
+def show_port_distribution_chart(hosts_data):
+    """포트 분포 차트"""
+    st.write("### 🚪 포트 분포 분석")
+    
+    port_data = []
+    for host in hosts_data:
+        labels = host.get('labels', {})
+        port = host.get('port', 'N/A')
+        service = labels.get('service', 'unknown')
+        group = labels.get('group', 'unknown')
+        
+        if port != 'N/A':
+            port_data.append({
+                'Port': port,
+                'Service': service,
+                'Group': group,
+                'Count': 1
+            })
+    
+    if not port_data:
+        st.info("포트 정보가 없습니다.")
+        return
+    
+    port_df = pd.DataFrame(port_data)
+    
+    # 포트별 서비스 분포
+    port_service_df = port_df.groupby(['Port', 'Service']).size().reset_index(name='Count')
+    
+    # 선버스트 차트 시뮬레이션 (계층적 바차트)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+    
+    # 포트별 총 개수
+    port_counts = port_df.groupby('Port')['Count'].sum().sort_values(ascending=False)
+    ax1.bar(range(len(port_counts)), port_counts.values, color='lightblue')
+    ax1.set_xticks(range(len(port_counts)))
+    ax1.set_xticklabels(port_counts.index, rotation=45)
+    ax1.set_title("포트별 호스트 수")
+    ax1.set_xlabel("포트")
+    ax1.set_ylabel("호스트 수")
+    
+    # 서비스별 포트 분포
+    service_counts = port_df.groupby('Service')['Count'].sum().sort_values(ascending=False)
+    colors = plt.cm.Set3(range(len(service_counts)))
+    ax2.pie(service_counts.values, labels=service_counts.index, autopct='%1.1f%%', colors=colors)
+    ax2.set_title("서비스별 분포")
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    
+    # 상세 테이블
+    with st.expander("📋 상세 포트 정보", expanded=False):
+        summary_df = port_df.groupby(['Port', 'Service', 'Group']).size().reset_index(name='호스트수')
+        st.dataframe(summary_df.sort_values('호스트수', ascending=False))
+
+def show_ip_network_map(hosts_data):
+    """IP 네트워크 맵"""
+    st.write("### 🌐 IP 네트워크 맵")
+    
+    # IP 대역별 분류
+    import ipaddress
+    network_data = defaultdict(list)
+    
+    for host in hosts_data:
+        ip = host.get('ip')
+        if ip and ip != 'N/A':
+            try:
+                # /24 네트워크로 그룹핑
+                network = ipaddress.IPv4Network(f"{ip}/24", strict=False)
+                network_addr = str(network.network_address)
+                network_data[network_addr].append(host)
+            except:
+                network_data['기타'].append(host)
+    
+    if not network_data:
+        st.info("유효한 IP 정보가 없습니다.")
+        return
+    
+    # 네트워크별 통계
+    st.write("**네트워크 대역별 분포:**")
+    
+    network_stats = []
+    for network, hosts in network_data.items():
+        services = set(h.get('labels', {}).get('service', 'unknown') for h in hosts)
+        groups = set(h.get('labels', {}).get('group', 'unknown') for h in hosts)
+        
+        network_stats.append({
+            '네트워크': network + '/24' if network != '기타' else network,
+            '호스트 수': len(hosts),
+            '서비스 종류': len(services),
+            '그룹 종류': len(groups),
+            '서비스 목록': ', '.join(list(services)[:3]) + ('...' if len(services) > 3 else ''),
+            '그룹 목록': ', '.join(list(groups)[:3]) + ('...' if len(groups) > 3 else '')
+        })
+    
+    network_df = pd.DataFrame(network_stats)
+    network_df = network_df.sort_values('호스트 수', ascending=False)
+    st.dataframe(network_df, use_container_width=True)
+    
+    # 네트워크 크기 시각화
+    fig, ax = plt.subplots(figsize=(12, 6))
+    
+    networks = network_df['네트워크'].tolist()
+    host_counts = network_df['호스트 수'].tolist()
+    
+    bars = ax.bar(range(len(networks)), host_counts, color='lightgreen')
+    ax.set_xticks(range(len(networks)))
+    ax.set_xticklabels(networks, rotation=45, ha='right')
+    ax.set_title("네트워크 대역별 호스트 분포")
+    ax.set_xlabel("네트워크 대역")
+    ax.set_ylabel("호스트 수")
+    
+    # 막대 위에 숫자 표시
+    for bar, count in zip(bars, host_counts):
+        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1, 
+               str(count), ha='center', va='bottom')
+    
+    plt.tight_layout()
+    st.pyplot(fig)
 
 def show_config_generator():
     """설정 제너레이터 화면"""
