@@ -371,13 +371,7 @@ def show_label_relationship_graph(hosts_data):
         combo = f"{service}|{group}|{os_val}"
         label_combinations[combo] += 1
     
-    # 네트워크 그래프 데이터 준비
-    import networkx as nx
-    import matplotlib.pyplot as plt
-    
-    G = nx.Graph()
-    
-    # 노드 추가 (서비스, 그룹, OS)
+    # 간단한 분포 차트 (Streamlit 기본 차트 사용)
     services = set()
     groups = set()
     os_types = set()
@@ -388,53 +382,41 @@ def show_label_relationship_graph(hosts_data):
         groups.add(labels.get('group', 'unknown'))
         os_types.add(labels.get('os', 'unknown'))
     
-    # 노드 추가
-    for service in services:
-        G.add_node(f"S:{service}", type='service')
-    for group in groups:
-        G.add_node(f"G:{group}", type='group')
-    for os_val in os_types:
-        G.add_node(f"O:{os_val}", type='os')
+    # 서비스별 분포
+    st.write("### 📊 서비스별 분포")
+    service_counts = defaultdict(int)
+    for host in hosts_data:
+        service = host.get('labels', {}).get('service', 'unknown')
+        service_counts[service] += 1
     
-    # 엣지 추가 (관계 기반)
-    for service, related_groups in service_groups.items():
-        for group in related_groups:
-            G.add_edge(f"S:{service}", f"G:{group}")
+    if service_counts:
+        service_df = pd.DataFrame(list(service_counts.items()), columns=['Service', 'Count'])
+        service_df = service_df.sort_values('Count', ascending=False)
+        st.bar_chart(service_df.set_index('Service'))
     
-    for group, related_os in group_os.items():
-        for os_val in related_os:
-            G.add_edge(f"G:{group}", f"O:{os_val}")
+    # 그룹별 분포  
+    st.write("### 📊 그룹별 분포")
+    group_counts = defaultdict(int)
+    for host in hosts_data:
+        group = host.get('labels', {}).get('group', 'unknown')
+        group_counts[group] += 1
     
-    # 그래프 그리기
-    fig, ax = plt.subplots(figsize=(12, 8))
+    if group_counts:
+        group_df = pd.DataFrame(list(group_counts.items()), columns=['Group', 'Count'])
+        group_df = group_df.sort_values('Count', ascending=False)
+        st.bar_chart(group_df.set_index('Group'))
     
-    # 노드 색상 설정
-    node_colors = []
-    for node in G.nodes():
-        if node.startswith('S:'):
-            node_colors.append('#FF6B6B')  # 서비스: 빨강
-        elif node.startswith('G:'):
-            node_colors.append('#4ECDC4')  # 그룹: 청록
-        else:
-            node_colors.append('#45B7D1')  # OS: 파랑
+    # OS별 분포
+    st.write("### 📊 OS별 분포")
+    os_counts = defaultdict(int)
+    for host in hosts_data:
+        os_val = host.get('labels', {}).get('os', 'unknown')
+        os_counts[os_val] += 1
     
-    # 레이아웃 계산
-    pos = nx.spring_layout(G, k=3, iterations=50)
-    
-    # 그래프 그리기
-    nx.draw(G, pos, 
-            node_color=node_colors,
-            node_size=1000,
-            font_size=8,
-            font_weight='bold',
-            with_labels=True,
-            edge_color='gray',
-            alpha=0.7,
-            ax=ax)
-    
-    plt.title("라벨 관계도 (빨강:서비스, 청록:그룹, 파랑:OS)", fontsize=14)
-    plt.tight_layout()
-    st.pyplot(fig)
+    if os_counts:
+        os_df = pd.DataFrame(list(os_counts.items()), columns=['OS', 'Count'])
+        os_df = os_df.sort_values('Count', ascending=False)
+        st.bar_chart(os_df.set_index('OS'))
     
     # 관계 통계
     col1, col2, col3 = st.columns(3)
@@ -705,9 +687,7 @@ def show_server_deployment():
             if server["name"]:
                 st.info(f"**{server['name']}**\n서버 {i+1}")
                 if st.button(f"상태 확인", key=f"check_{server['id']}"):
-                    st.write("🔄 서버 상태를 확인하는 중...")
-                    # TODO: 실제 서버 상태 확인 로직
-                    st.success("✅ 정상")
+                    check_server_status(server['name'], server['id'])
             else:
                 st.warning(f"**서버 {i+1}**\n설정되지 않음")
     
@@ -1264,6 +1244,275 @@ def show_prometheus_settings():
                     repo_url = new_repo_url
         
         show_version_info(VERSION, repo_url)
+    
+    # JSON 검증 섹션 추가
+    st.write("---")
+    st.subheader("🔍 설정 검증")
+    
+    validation_method = st.radio(
+        "검증 방법 선택:",
+        ["JSON 붙여넣기", "파일 업로드"],
+        horizontal=True
+    )
+    
+    json_data = None
+    
+    if validation_method == "JSON 붙여넣기":
+        st.write("**JSON 데이터를 붙여넣어주세요:**")
+        json_text = st.text_area(
+            "JSON 입력:",
+            height=200,
+            placeholder='[\n  {\n    "targets": ["192.168.1.100:9100"],\n    "labels": {\n      "service": "web-server",\n      "group": "production"\n    }\n  }\n]'
+        )
+        
+        if json_text.strip():
+            try:
+                json_data = json.loads(json_text)
+                st.success("✅ 유효한 JSON 형식입니다!")
+            except json.JSONDecodeError as e:
+                st.error(f"❌ JSON 형식 오류: {str(e)}")
+                json_data = None
+    
+    else:  # 파일 업로드
+        uploaded_file = st.file_uploader(
+            "JSON 파일을 업로드하세요:",
+            type=['json'],
+            help="prometheus 설정 JSON 파일을 선택해주세요"
+        )
+        
+        if uploaded_file is not None:
+            try:
+                json_data = json.load(uploaded_file)
+                st.success(f"✅ 파일 업로드 성공: {uploaded_file.name}")
+            except json.JSONDecodeError as e:
+                st.error(f"❌ 파일 읽기 오류: {str(e)}")
+                json_data = None
+            except Exception as e:
+                st.error(f"❌ 파일 처리 오류: {str(e)}")
+                json_data = None
+    
+    # JSON 데이터 분석 및 시각화
+    if json_data is not None:
+        analyze_uploaded_json(json_data)
+
+def analyze_uploaded_json(json_data):
+    """업로드된 JSON 데이터 분석 및 시각화"""
+    try:
+        st.subheader("📊 JSON 데이터 분석")
+        
+        # JSON 구조 확인 - 단일 객체인지 배열인지
+        if isinstance(json_data, dict):
+            if 'targets' in json_data and 'labels' in json_data:
+                # 단일 객체
+                json_list = [json_data]
+            else:
+                st.error("❌ 올바른 Prometheus 설정 형식이 아닙니다. 'targets'와 'labels' 필드가 필요합니다.")
+                return
+        elif isinstance(json_data, list):
+            json_list = json_data
+        else:
+            st.error("❌ JSON 데이터는 객체 또는 배열이어야 합니다.")
+            return
+        
+        # 기본 통계
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("전체 타겟", len(json_list))
+        with col2:
+            total_hosts = sum(len(item.get('targets', [])) for item in json_list)
+            st.metric("호스트 수", total_hosts)
+        with col3:
+            unique_services = set()
+            for item in json_list:
+                if 'labels' in item and 'service' in item['labels']:
+                    unique_services.add(item['labels']['service'])
+            st.metric("서비스 수", len(unique_services))
+        
+        # 데이터 테이블 표시
+        st.subheader("📋 상세 데이터")
+        
+        table_data = []
+        for i, item in enumerate(json_list):
+            targets = item.get('targets', [])
+            labels = item.get('labels', {})
+            
+            for target in targets:
+                table_data.append({
+                    '번호': i + 1,
+                    '타겟': target,
+                    '서비스': labels.get('service', 'N/A'),
+                    '그룹': labels.get('group', 'N/A'),
+                    'IP': labels.get('ip', 'N/A'),
+                    'GID': labels.get('gid', 'N/A'),
+                    'OS': labels.get('os', 'N/A'),
+                    '용도': labels.get('purpose', 'N/A')
+                })
+        
+        if table_data:
+            df = pd.DataFrame(table_data)
+            st.dataframe(df, use_container_width=True)
+            
+            # CSV 다운로드
+            csv = df.to_csv(index=False)
+            st.download_button(
+                label="📥 CSV로 다운로드",
+                data=csv,
+                file_name=f"prometheus_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv"
+            )
+        
+        # 시각화
+        if len(json_list) > 1:
+            st.subheader("📈 시각화")
+            
+            # 서비스별 분포
+            service_counts = defaultdict(int)
+            group_counts = defaultdict(int)
+            port_counts = defaultdict(int)
+            
+            for item in json_list:
+                labels = item.get('labels', {})
+                targets = item.get('targets', [])
+                
+                service = labels.get('service', 'unknown')
+                group = labels.get('group', 'unknown')
+                
+                service_counts[service] += len(targets)
+                group_counts[group] += len(targets)
+                
+                for target in targets:
+                    if ':' in target:
+                        port = target.split(':')[-1]
+                        port_counts[port] += 1
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.write("**서비스별 분포:**")
+                if service_counts:
+                    service_df = pd.DataFrame(list(service_counts.items()), columns=['Service', 'Count'])
+                    service_df = service_df.sort_values('Count', ascending=False)
+                    st.bar_chart(service_df.set_index('Service'))
+            
+            with col2:
+                st.write("**그룹별 분포:**")
+                if group_counts:
+                    group_df = pd.DataFrame(list(group_counts.items()), columns=['Group', 'Count'])
+                    group_df = group_df.sort_values('Count', ascending=False)
+                    st.bar_chart(group_df.set_index('Group'))
+            
+            if port_counts:
+                st.write("**포트별 분포:**")
+                port_df = pd.DataFrame(list(port_counts.items()), columns=['Port', 'Count'])
+                port_df = port_df.sort_values('Count', ascending=False)
+                st.bar_chart(port_df.set_index('Port'))
+        
+        # 검증 결과
+        st.subheader("✅ 검증 결과")
+        
+        validation_results = validate_json_config(json_list)
+        
+        if validation_results['errors']:
+            st.error("❌ **오류 발견:**")
+            for error in validation_results['errors']:
+                st.write(f"- {error}")
+        
+        if validation_results['warnings']:
+            st.warning("⚠️ **권장사항:**")
+            for warning in validation_results['warnings']:
+                st.write(f"- {warning}")
+        
+        if not validation_results['errors'] and not validation_results['warnings']:
+            st.success("🎉 모든 검증을 통과했습니다!")
+        
+        # 최적화 제안
+        if validation_results['suggestions']:
+            st.info("💡 **최적화 제안:**")
+            for suggestion in validation_results['suggestions']:
+                st.write(f"- {suggestion}")
+    
+    except Exception as e:
+        st.error(f"❌ JSON 분석 중 오류가 발생했습니다: {str(e)}")
+
+def validate_json_config(json_list):
+    """JSON 설정 검증"""
+    errors = []
+    warnings = []
+    suggestions = []
+    
+    for i, item in enumerate(json_list):
+        item_num = i + 1
+        
+        # 필수 필드 검사
+        if 'targets' not in item:
+            errors.append(f"항목 {item_num}: 'targets' 필드가 없습니다")
+            continue
+        
+        if 'labels' not in item:
+            warnings.append(f"항목 {item_num}: 'labels' 필드가 없습니다")
+        
+        # targets 검증
+        targets = item.get('targets', [])
+        if not targets:
+            warnings.append(f"항목 {item_num}: targets가 비어있습니다")
+        
+        for j, target in enumerate(targets):
+            if not isinstance(target, str):
+                errors.append(f"항목 {item_num}, 타겟 {j+1}: 문자열이 아닙니다")
+                continue
+            
+            if ':' not in target:
+                warnings.append(f"항목 {item_num}, 타겟 {j+1}: 포트가 지정되지 않았습니다 ({target})")
+            else:
+                ip, port = target.rsplit(':', 1)
+                
+                # IP 주소 검증
+                try:
+                    ipaddress.ip_address(ip)
+                except ValueError:
+                    warnings.append(f"항목 {item_num}, 타겟 {j+1}: 올바르지 않은 IP 주소 ({ip})")
+                
+                # 포트 검증
+                try:
+                    port_num = int(port)
+                    if port_num < 1 or port_num > 65535:
+                        warnings.append(f"항목 {item_num}, 타겟 {j+1}: 올바르지 않은 포트 번호 ({port})")
+                except ValueError:
+                    warnings.append(f"항목 {item_num}, 타겟 {j+1}: 포트는 숫자여야 합니다 ({port})")
+        
+        # labels 검증
+        labels = item.get('labels', {})
+        if labels:
+            required_labels = ['service', 'group', 'ip']
+            for label in required_labels:
+                if label not in labels:
+                    warnings.append(f"항목 {item_num}: 권장 라벨 '{label}'이 없습니다")
+            
+            # 'tobe' 값 체크
+            tobe_labels = [k for k, v in labels.items() if v == 'tobe']
+            if tobe_labels:
+                warnings.append(f"항목 {item_num}: 'tobe' 값을 가진 라벨들 ({', '.join(tobe_labels)})")
+        
+        # 최적화 제안
+        if 'labels' in item and 'service' in item['labels']:
+            service = item['labels']['service']
+            if len(targets) > 1:
+                suggestions.append(f"항목 {item_num}: {service} 서비스의 여러 타겟을 별도 항목으로 분리 고려")
+    
+    # 중복 타겟 체크
+    all_targets = []
+    for item in json_list:
+        all_targets.extend(item.get('targets', []))
+    
+    duplicates = [target for target in set(all_targets) if all_targets.count(target) > 1]
+    if duplicates:
+        warnings.append(f"중복된 타겟들: {', '.join(duplicates)}")
+    
+    return {
+        'errors': errors,
+        'warnings': warnings, 
+        'suggestions': suggestions
+    }
 
 def get_label_suggestions():
     """기존 호스트 데이터에서 라벨 제안값 추출"""
@@ -1523,6 +1772,102 @@ def validate_config(config):
             st.warning("⚠️ 권장사항:")
             for warning in warnings:
                 st.write(f"- {warning}")
+
+def check_server_status(server_name, server_id):
+    """실제 서버 상태 확인"""
+    if not server_name or server_name.strip() == "":
+        st.error("❌ 서버 주소가 설정되지 않았습니다.")
+        st.warning("💡 'Prometheus 설정' 탭에서 서버 주소를 설정해주세요.")
+        return
+    
+    st.write("🔄 서버 상태를 확인하는 중...")
+    
+    # 기본 형식 검증
+    if not (server_name.startswith('http://') or server_name.startswith('https://')):
+        st.error("❌ 올바른 URL 형식이 아닙니다. (http:// 또는 https://로 시작해야 함)")
+        return
+    
+    try:
+        import urllib3
+        import requests
+        from requests.exceptions import ConnectionError, Timeout, RequestException
+        import urllib3.exceptions
+        
+        # SSL 경고 무시 (내부 서버인 경우)
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        
+        # 헬스체크 엔드포인트들
+        health_endpoints = [
+            f"{server_name.rstrip('/')}/api/v1/query?query=up",  # Prometheus 메트릭 쿼리
+            f"{server_name.rstrip('/')}/metrics",  # Prometheus 자체 메트릭
+            f"{server_name.rstrip('/')}/api/v1/status/buildinfo",  # 빌드 정보
+            f"{server_name.rstrip('/')}/",  # 루트 페이지
+        ]
+        
+        session = requests.Session()
+        session.verify = False  # SSL 검증 비활성화 (내부 서버)
+        
+        success = False
+        error_msg = ""
+        
+        for i, endpoint in enumerate(health_endpoints):
+            try:
+                response = session.get(endpoint, timeout=5)
+                
+                if response.status_code == 200:
+                    success = True
+                    
+                    # 응답 내용에 따른 추가 정보
+                    if 'prometheus' in response.text.lower() or 'query' in endpoint:
+                        st.success("✅ Prometheus 서버 정상 - API 응답 확인됨")
+                        
+                        # 간단한 서버 정보 표시
+                        if 'buildinfo' in endpoint:
+                            try:
+                                build_info = response.json()
+                                if 'data' in build_info:
+                                    st.info(f"📊 버전: {build_info['data'].get('version', 'N/A')}")
+                            except:
+                                pass
+                        break
+                    else:
+                        st.success("✅ 서버 응답 정상")
+                        break
+                        
+            except (ConnectionError, urllib3.exceptions.NewConnectionError):
+                error_msg = f"연결 실패: {server_name}에 연결할 수 없습니다."
+            except Timeout:
+                error_msg = f"타임아웃: 서버 응답 시간이 너무 깁니다."
+            except RequestException as e:
+                error_msg = f"요청 오류: {str(e)}"
+            except Exception as e:
+                error_msg = f"알 수 없는 오류: {str(e)}"
+        
+        if not success:
+            st.error(f"❌ 서버 연결 실패")
+            st.warning(f"⚠️ {error_msg}")
+            
+            # troubleshooting 제안
+            with st.expander("🔧 문제 해결 방법", expanded=False):
+                st.write("""
+                **가능한 원인:**
+                - 서버가 실행되지 않음
+                - 네트워크 연결 문제  
+                - 방화벽 차단
+                - 잘못된 URL 또는 포트
+                
+                **확인 방법:**
+                1. 서버가 실행 중인지 확인
+                2. URL이 정확한지 확인 (예: http://192.168.1.100:9090)
+                3. 네트워크 연결 상태 확인
+                4. 방화벽 설정 확인
+                """)
+        
+    except ImportError:
+        st.error("❌ requests 라이브러리가 설치되지 않았습니다.")
+        st.code("pip install requests", language="bash")
+    except Exception as e:
+        st.error(f"❌ 서버 상태 확인 중 오류 발생: {str(e)}")
 
 def create_deployment_files(selected_files, hosts_by_file):
     """로컬에 배포용 설정 파일들 생성"""
