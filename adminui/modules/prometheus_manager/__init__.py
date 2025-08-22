@@ -22,7 +22,13 @@ def show_module():
     st.caption(f"모듈 버전: {VERSION}")
     
     # 탭 생성
-    tab1, tab2, tab3, tab4 = st.tabs(["호스트 관리", "설정 제너레이터", "서버 배포", "Prometheus 설정"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "📊 호스트 관리", 
+        "⚙️ 설정 제너레이터", 
+        "🚀 서버 배포", 
+        "🔍 설정 검증",
+        "🔧 Prometheus 설정"
+    ])
     
     # 호스트 관리 탭
     with tab1:
@@ -36,8 +42,12 @@ def show_module():
     with tab3:
         show_server_deployment()
     
-    # Prometheus 설정 탭
+    # 설정 검증 탭
     with tab4:
+        show_config_validator()
+    
+    # Prometheus 설정 탭
+    with tab5:
         show_prometheus_settings()
 
 def show_host_management():
@@ -471,6 +481,416 @@ def show_server_deployment():
             st.success("배포 기록이 초기화되었습니다.")
     else:
         st.info("배포 기록이 없습니다.")
+
+def show_config_validator():
+    """설정 검증 화면"""
+    st.subheader("설정 검증")
+    st.write("기존 설정과 격리된 상태에서 새로운 JSON/YAML 설정을 검증합니다.")
+    
+    # 입력 방식 선택
+    input_method = st.radio(
+        "입력 방식 선택:",
+        ["텍스트 직접 입력", "파일 업로드"],
+        horizontal=True
+    )
+    
+    config_data = None
+    config_format = None
+    
+    if input_method == "텍스트 직접 입력":
+        # 형식 선택
+        config_format = st.selectbox("설정 형식", ["JSON", "YAML"])
+        
+        # 예시 템플릿 제공
+        if st.button("예시 템플릿 로드"):
+            if config_format == "JSON":
+                example_config = get_example_json_config()
+            else:
+                example_config = get_example_yaml_config()
+            st.session_state.config_input = example_config
+        
+        # 텍스트 입력
+        config_text = st.text_area(
+            f"{config_format} 설정 입력:",
+            value=st.session_state.get('config_input', ''),
+            height=400,
+            help=f"검증할 {config_format} 형식의 Prometheus 설정을 입력하세요"
+        )
+        
+        if config_text.strip():
+            config_data = config_text
+    
+    else:
+        # 파일 업로드
+        uploaded_file = st.file_uploader(
+            "설정 파일 업로드", 
+            type=['json', 'yml', 'yaml'],
+            help="JSON 또는 YAML 형식의 Prometheus 설정 파일을 업로드하세요"
+        )
+        
+        if uploaded_file is not None:
+            # 파일 확장자로 형식 판단
+            if uploaded_file.name.endswith('.json'):
+                config_format = "JSON"
+            elif uploaded_file.name.endswith(('.yml', '.yaml')):
+                config_format = "YAML"
+            
+            # 파일 내용 읽기
+            try:
+                config_data = uploaded_file.read().decode('utf-8')
+                st.success(f"파일 '{uploaded_file.name}'이 업로드되었습니다.")
+            except Exception as e:
+                st.error(f"파일 읽기 실패: {str(e)}")
+    
+    # 검증 실행
+    if config_data and config_format:
+        col1, col2 = st.columns([1, 3])
+        
+        with col1:
+            if st.button("🔍 검증 실행", type="primary"):
+                validate_custom_config(config_data, config_format)
+        
+        with col2:
+            if st.button("📚 기존 설정 참조"):
+                show_existing_config_reference()
+    
+    # 검증 도움말
+    st.write("---")
+    with st.expander("💡 검증 도움말", expanded=False):
+        st.write("""
+        **검증 항목:**
+        - JSON/YAML 구문 검사
+        - 필수 필드 확인 (targets, labels)
+        - IP 주소 및 포트 형식 검증
+        - 라벨 규칙 검사
+        - 기존 설정과의 중복 확인
+        - 권장사항 제시
+        
+        **기존 설정 참조:**
+        - 현재 사용 중인 라벨 값들
+        - 포트 사용 현황
+        - IP 대역 분포
+        - 서비스/그룹 목록
+        """)
+
+def get_example_json_config():
+    """예시 JSON 설정 반환"""
+    return '''{
+  "targets": ["192.168.1.100:9100"],
+  "labels": {
+    "service": "example-service",
+    "group": "production",
+    "ip": "192.168.1.100",
+    "gid": "app-001",
+    "purpose": "웹 서버 모니터링",
+    "os": "ubuntu-20.04",
+    "environment": "prod",
+    "team": "backend"
+  }
+}'''
+
+def get_example_yaml_config():
+    """예시 YAML 설정 반환"""
+    return '''targets:
+  - "192.168.1.100:9100"
+labels:
+  service: "example-service"
+  group: "production"
+  ip: "192.168.1.100"
+  gid: "app-001"
+  purpose: "웹 서버 모니터링"
+  os: "ubuntu-20.04"
+  environment: "prod"
+  team: "backend"'''
+
+def validate_custom_config(config_data, config_format):
+    """커스텀 설정 검증"""
+    st.subheader("🔍 검증 결과")
+    
+    # 1. 구문 검사
+    parsed_config = None
+    try:
+        if config_format == "JSON":
+            parsed_config = json.loads(config_data)
+            st.success("✅ JSON 구문이 올바릅니다.")
+        else:  # YAML
+            try:
+                import yaml
+                parsed_config = yaml.safe_load(config_data)
+                st.success("✅ YAML 구문이 올바릅니다.")
+            except ImportError:
+                st.error("❌ YAML 파싱을 위해 PyYAML 패키지가 필요합니다.")
+                return
+    except Exception as e:
+        st.error(f"❌ {config_format} 구문 오류: {str(e)}")
+        return
+    
+    # 2. 구조 검증
+    issues = []
+    warnings = []
+    suggestions = []
+    
+    # 단일 객체인지 배열인지 확인
+    if isinstance(parsed_config, list):
+        configs = parsed_config
+        st.info(f"📋 배열 형태의 설정 (항목 수: {len(configs)})")
+    else:
+        configs = [parsed_config]
+        st.info("📄 단일 객체 형태의 설정")
+    
+    # 각 설정 항목 검증
+    for i, config in enumerate(configs):
+        st.write(f"**항목 {i+1} 검증:**")
+        
+        # 필수 필드 검사
+        if not config.get('targets'):
+            issues.append(f"항목 {i+1}: 'targets' 필드가 누락되었습니다")
+        
+        if not config.get('labels'):
+            warnings.append(f"항목 {i+1}: 'labels' 필드가 누락되었습니다")
+        
+        # 타겟 검증
+        targets = config.get('targets', [])
+        for target in targets:
+            if not isinstance(target, str):
+                issues.append(f"항목 {i+1}: 타겟은 문자열이어야 합니다: {target}")
+                continue
+                
+            if ':' not in target:
+                warnings.append(f"항목 {i+1}: 타겟에 포트가 명시되지 않았습니다: {target}")
+            else:
+                ip, port = target.rsplit(':', 1)
+                try:
+                    ipaddress.ip_address(ip)
+                except ValueError:
+                    issues.append(f"항목 {i+1}: 올바르지 않은 IP 주소: {ip}")
+                
+                if not port.isdigit() or not (1 <= int(port) <= 65535):
+                    issues.append(f"항목 {i+1}: 올바르지 않은 포트: {port}")
+        
+        # 라벨 검증
+        labels = config.get('labels', {})
+        if labels:
+            validate_labels_detailed(labels, i+1, warnings, suggestions)
+    
+    # 기존 설정과 비교
+    if hasattr(st.session_state, 'prometheus_hosts'):
+        compare_with_existing_configs(configs, warnings, suggestions)
+    
+    # 결과 표시
+    display_validation_results(issues, warnings, suggestions)
+    
+    # 최종 설정 미리보기
+    st.subheader("📄 검증된 설정 미리보기")
+    if config_format == "JSON":
+        formatted_config = json.dumps(parsed_config, indent=2, ensure_ascii=False)
+        st.code(formatted_config, language="json")
+    else:
+        st.code(config_data, language="yaml")
+
+def validate_labels_detailed(labels, item_num, warnings, suggestions):
+    """라벨 상세 검증"""
+    required_labels = ['service', 'group', 'ip']
+    recommended_labels = ['gid', 'purpose', 'os']
+    
+    # 필수 라벨 검사
+    for label in required_labels:
+        if not labels.get(label):
+            warnings.append(f"항목 {item_num}: 필수 라벨 '{label}'이 누락되었습니다")
+    
+    # 권장 라벨 검사
+    missing_recommended = [label for label in recommended_labels if not labels.get(label)]
+    if missing_recommended:
+        suggestions.append(f"항목 {item_num}: 권장 라벨 추가 고려: {', '.join(missing_recommended)}")
+    
+    # 라벨 값 검사
+    for key, value in labels.items():
+        if not value or str(value).strip() == '':
+            warnings.append(f"항목 {item_num}: 라벨 '{key}'의 값이 비어있습니다")
+        elif str(value) == 'tobe':
+            suggestions.append(f"항목 {item_num}: 라벨 '{key}'의 값이 'tobe'입니다. 실제 값으로 변경하세요")
+
+def compare_with_existing_configs(new_configs, warnings, suggestions):
+    """기존 설정과 비교"""
+    existing_hosts = st.session_state.prometheus_hosts
+    
+    existing_targets = set()
+    existing_ips = set()
+    existing_services = set()
+    
+    for host in existing_hosts:
+        target = host.get('target', '')
+        existing_targets.add(target)
+        
+        labels = host.get('labels', {})
+        if labels.get('ip'):
+            existing_ips.add(labels['ip'])
+        if labels.get('service'):
+            existing_services.add(labels['service'])
+    
+    # 새 설정 검사
+    for i, config in enumerate(new_configs):
+        targets = config.get('targets', [])
+        labels = config.get('labels', {})
+        
+        # 중복 타겟 검사
+        for target in targets:
+            if target in existing_targets:
+                warnings.append(f"항목 {i+1}: 타겟 '{target}'이 기존 설정에 이미 존재합니다")
+        
+        # IP 중복 검사
+        if labels.get('ip') in existing_ips:
+            warnings.append(f"항목 {i+1}: IP '{labels.get('ip')}'가 기존 설정에 이미 존재합니다")
+        
+        # 서비스명 유사성 검사
+        service = labels.get('service', '')
+        similar_services = [s for s in existing_services if service and service.lower() in s.lower()]
+        if similar_services:
+            suggestions.append(f"항목 {i+1}: 유사한 서비스명이 존재합니다: {', '.join(similar_services)}")
+
+def display_validation_results(issues, warnings, suggestions):
+    """검증 결과 표시"""
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.metric("오류", len(issues), delta=f"해결 필요" if issues else "없음")
+    with col2:
+        st.metric("경고", len(warnings), delta=f"검토 권장" if warnings else "없음")
+    with col3:
+        st.metric("제안", len(suggestions), delta=f"개선 가능" if suggestions else "완벽")
+    
+    if issues:
+        st.error("❌ **오류 (해결 필요):**")
+        for issue in issues:
+            st.write(f"- {issue}")
+    
+    if warnings:
+        st.warning("⚠️ **경고 (검토 권장):**")
+        for warning in warnings:
+            st.write(f"- {warning}")
+    
+    if suggestions:
+        st.info("💡 **제안 (개선 가능):**")
+        for suggestion in suggestions:
+            st.write(f"- {suggestion}")
+    
+    if not issues and not warnings and not suggestions:
+        st.success("🎉 **완벽한 설정입니다!** 오류, 경고, 개선사항이 없습니다.")
+
+def show_existing_config_reference():
+    """기존 설정 참조 정보 표시"""
+    st.subheader("📚 기존 설정 참조")
+    
+    if not hasattr(st.session_state, 'prometheus_hosts'):
+        st.warning("기존 설정 데이터가 없습니다. '호스트 관리' 탭에서 먼저 스캔해주세요.")
+        return
+    
+    hosts_data = st.session_state.prometheus_hosts
+    
+    # 탭으로 정보 분류
+    ref_tab1, ref_tab2, ref_tab3, ref_tab4 = st.tabs([
+        "라벨 값", "포트 현황", "IP 대역", "서비스/그룹"
+    ])
+    
+    with ref_tab1:
+        st.write("**현재 사용 중인 라벨 값들:**")
+        label_values = defaultdict(set)
+        
+        for host in hosts_data:
+            labels = host.get('labels', {})
+            for key, value in labels.items():
+                if value and value != 'tobe':
+                    label_values[key].add(str(value))
+        
+        for label, values in sorted(label_values.items()):
+            with st.expander(f"{label} ({len(values)}개)"):
+                for value in sorted(values):
+                    st.code(f'"{label}": "{value}"')
+    
+    with ref_tab2:
+        st.write("**포트 사용 현황:**")
+        ports = []
+        for host in hosts_data:
+            target = host.get('target', '')
+            if ':' in target:
+                port = target.split(':')[-1]
+                ports.append(port)
+        
+        port_counts = Counter(ports)
+        port_df = pd.DataFrame([
+            {"포트": port, "사용 횟수": count, "설명": get_port_description(port)}
+            for port, count in port_counts.most_common()
+        ])
+        st.dataframe(port_df, use_container_width=True)
+    
+    with ref_tab3:
+        st.write("**IP 대역 분포:**")
+        ips = []
+        for host in hosts_data:
+            labels = host.get('labels', {})
+            ip = labels.get('ip', '')
+            if ip:
+                ips.append(ip)
+        
+        # IP 대역별 그룹화
+        subnets = defaultdict(list)
+        for ip in ips:
+            try:
+                ip_obj = ipaddress.ip_address(ip)
+                subnet = str(ipaddress.ip_network(f"{ip}/24", strict=False))
+                subnets[subnet].append(ip)
+            except:
+                subnets['기타'].append(ip)
+        
+        for subnet, subnet_ips in subnets.items():
+            with st.expander(f"{subnet} ({len(subnet_ips)}개)"):
+                for ip in sorted(subnet_ips):
+                    st.write(f"- {ip}")
+    
+    with ref_tab4:
+        st.write("**서비스 및 그룹:**")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.write("**서비스 목록:**")
+            services = set()
+            for host in hosts_data:
+                labels = host.get('labels', {})
+                service = labels.get('service', '')
+                if service and service != 'tobe':
+                    services.add(service)
+            
+            for service in sorted(services):
+                st.code(f'"service": "{service}"')
+        
+        with col2:
+            st.write("**그룹 목록:**")
+            groups = set()
+            for host in hosts_data:
+                labels = host.get('labels', {})
+                group = labels.get('group', '')
+                if group and group != 'tobe':
+                    groups.add(group)
+            
+            for group in sorted(groups):
+                st.code(f'"group": "{group}"')
+
+def get_port_description(port):
+    """포트 설명 반환"""
+    port_descriptions = {
+        '9100': 'Node Exporter (시스템 메트릭)',
+        '9104': 'MySQL Exporter',
+        '9187': 'PostgreSQL Exporter', 
+        '9121': 'Redis Exporter',
+        '9113': 'Nginx Exporter',
+        '9090': 'Prometheus Server',
+        '3000': 'Grafana',
+        '8080': 'HTTP 서비스',
+        '443': 'HTTPS',
+        '80': 'HTTP'
+    }
+    return port_descriptions.get(port, '커스텀 포트')
 
 def show_prometheus_settings():
     """Prometheus 설정 화면"""
